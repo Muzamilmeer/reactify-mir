@@ -1102,16 +1102,20 @@ async function authenticateFingerprint() {
             playSound('addToCart');
             showNotification('🎉 Real fingerprint authentication successful!', 'success');
             
-                         setTimeout(() => {
-                 isAuthenticated = true;
-                 closeBiometricModal();
-                 if (isAppLocked) {
-                     unlockApp();
-                 } else {
-                     showNotification('🔓 Fingerprint authentication successful', 'success');
-                     updateLockButton();
-                 }
-             }, 1500);
+            setTimeout(() => {
+                console.log('🔐 Processing fingerprint authentication success...');
+                isAuthenticated = true;
+                closeBiometricModal();
+                
+                if (isAppLocked) {
+                    console.log('🔓 App is locked, calling unlockApp()');
+                    unlockApp();
+                } else {
+                    console.log('ℹ️ App not locked, just showing success message');
+                    showNotification('🔓 Fingerprint authentication successful', 'success');
+                    updateLockButton();
+                }
+            }, 1500);
         }
         
     } catch (error) {
@@ -1190,16 +1194,20 @@ async function authenticateFace() {
             playSound('addToCart');
             showNotification('🎉 Real face recognition successful!', 'success');
             
-                         setTimeout(() => {
-                 isAuthenticated = true;
-                 closeBiometricModal();
-                 if (isAppLocked) {
-                     unlockApp();
-                 } else {
-                     showNotification('🔓 Face recognition successful', 'success');
-                     updateLockButton();
-                 }
-             }, 1500);
+            setTimeout(() => {
+                console.log('🔐 Processing face authentication success...');
+                isAuthenticated = true;
+                closeBiometricModal();
+                
+                if (isAppLocked) {
+                    console.log('🔓 App is locked, calling unlockApp()');
+                    unlockApp();
+                } else {
+                    console.log('ℹ️ App not locked, just showing success message');
+                    showNotification('🔓 Face recognition successful', 'success');
+                    updateLockButton();
+                }
+            }, 1500);
         }
         
     } catch (error) {
@@ -1236,6 +1244,8 @@ function toggleAppLock() {
 }
 
 function lockApp() {
+    console.log('🔒 Locking app...');
+    
     isAppLocked = true;
     isAuthenticated = false;
     
@@ -1244,16 +1254,31 @@ function lockApp() {
     if (mainApp) {
         mainApp.style.filter = 'blur(5px)';
         mainApp.style.pointerEvents = 'none';
+        console.log('✅ Blur added to main app');
     }
     
-    showNotification('🔒 App locked! Use biometric authentication to unlock', 'info');
+    // Show notification before locking
+    try {
+        showNotification('🔒 App locked! Use biometric authentication to unlock', 'info');
+        console.log('✅ Lock notification shown');
+    } catch (error) {
+        console.log('⚠️ Could not show notification:', error);
+    }
+    
+    // Update lock button
     updateLockButton();
+    console.log('✅ Lock button updated');
     
     // Show unlock overlay
     showUnlockOverlay();
+    console.log('✅ Unlock overlay shown');
+    
+    console.log('✅ App lock completed');
 }
 
 function unlockApp() {
+    console.log('🔓 Unlocking app...');
+    
     isAppLocked = false;
     isAuthenticated = true;
     
@@ -1262,11 +1287,28 @@ function unlockApp() {
     if (mainApp) {
         mainApp.style.filter = 'none';
         mainApp.style.pointerEvents = 'auto';
+        console.log('✅ Blur removed from main app');
     }
     
+    // Hide unlock overlay
     hideUnlockOverlay();
+    console.log('✅ Unlock overlay hidden');
+    
+    // Update lock button
     updateLockButton();
-    showNotification('🔓 App unlocked successfully!', 'success');
+    console.log('✅ Lock button updated');
+    
+    // Show success notification
+    try {
+        showNotification('🔓 App unlocked successfully!', 'success');
+        console.log('✅ Success notification shown');
+    } catch (error) {
+        console.log('⚠️ Could not show notification:', error);
+        // Alternative notification
+        alert('🔓 App unlocked successfully!');
+    }
+    
+    console.log('✅ App unlock completed');
 }
 
 function updateLockButton() {
@@ -1295,17 +1337,35 @@ function showUnlockOverlay() {
                 <button onclick="showBiometricLogin()" class="unlock-btn">
                     <i class="fas fa-fingerprint"></i> Unlock with Biometrics
                 </button>
+                <button onclick="emergencyUnlock()" class="unlock-btn" style="background: #ff6b6b; margin-top: 10px;">
+                    <i class="fas fa-key"></i> Emergency Unlock
+                </button>
             </div>
         `;
         document.body.appendChild(overlay);
     }
     overlay.style.display = 'flex';
+    console.log('✅ Unlock overlay displayed');
 }
 
 function hideUnlockOverlay() {
     const overlay = document.getElementById('unlock-overlay');
     if (overlay) {
         overlay.style.display = 'none';
+        console.log('✅ Unlock overlay hidden');
+    }
+}
+
+// Emergency unlock function for testing
+function emergencyUnlock() {
+    console.log('🚨 Emergency unlock triggered');
+    const confirmed = confirm('🚨 Emergency Unlock\n\nThis will unlock the app without biometric verification.\nAre you sure?');
+    
+    if (confirmed) {
+        console.log('✅ Emergency unlock confirmed');
+        unlockApp();
+    } else {
+        console.log('❌ Emergency unlock cancelled');
     }
 }
 
@@ -1922,6 +1982,7 @@ window.showPasswordLogin = showPasswordLogin;
 window.toggleAppLock = toggleAppLock;
 window.lockApp = lockApp;
 window.unlockApp = unlockApp;
+window.emergencyUnlock = emergencyUnlock;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
