@@ -957,6 +957,216 @@ window.trackOrder = trackOrder;
 window.closeOrderModal = closeOrderModal;
 window.proceedToCheckout = proceedToCheckout;
 
+// PWA Installation and Notifications
+let deferredPrompt;
+let isAppInstalled = false;
+
+// Check if app is already installed
+function checkIfAppInstalled() {
+    // Check if running as PWA
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+        isAppInstalled = true;
+        console.log('App is running as PWA');
+    }
+    
+    // Check if running in TWA (Trusted Web Activity)
+    if (document.referrer.includes('android-app://')) {
+        isAppInstalled = true;
+        console.log('App is running as TWA');
+    }
+}
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('SW registered: ', registration);
+                
+                // Request notification permission and send welcome notification
+                requestNotificationPermission();
+                
+                // Send welcome notification after 2 seconds
+                setTimeout(() => {
+                    sendWelcomeNotification();
+                }, 2000);
+                
+            })
+            .catch((registrationError) => {
+                console.log('SW registration failed: ', registrationError);
+            });
+    });
+}
+
+// Request notification permission
+async function requestNotificationPermission() {
+    if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        console.log('Notification permission:', permission);
+        
+        if (permission === 'granted') {
+            console.log('Notification permission granted');
+        }
+    }
+}
+
+// Send welcome notification
+function sendWelcomeNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const welcomeNotification = new Notification('🎉 Welcome to ShopEasy!', {
+            body: 'Thank you for visiting Muzamil\'s premium shopping app! Discover amazing products with great deals.',
+            icon: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=192&h=192&q=80',
+            badge: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=72&h=72&q=80',
+            tag: 'welcome',
+            requireInteraction: false,
+            silent: false,
+            vibrate: [200, 100, 200, 100, 200]
+        });
+
+        welcomeNotification.onclick = function() {
+            window.focus();
+            this.close();
+        };
+
+        // Auto close after 10 seconds
+        setTimeout(() => {
+            welcomeNotification.close();
+        }, 10000);
+    }
+}
+
+// Listen for beforeinstallprompt event
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('beforeinstallprompt fired');
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show install notification
+    showInstallNotification();
+});
+
+// Show install notification
+function showInstallNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const installNotification = new Notification('📱 Install ShopEasy App!', {
+            body: 'Install Muzamil\'s ShopEasy app for a better shopping experience. Quick access, offline support, and exclusive deals!',
+            icon: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=192&h=192&q=80',
+            badge: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=72&h=72&q=80',
+            tag: 'install',
+            requireInteraction: true,
+            actions: [
+                {
+                    action: 'install',
+                    title: 'Install Now'
+                },
+                {
+                    action: 'later',
+                    title: 'Maybe Later'
+                }
+            ]
+        });
+
+        installNotification.onclick = function() {
+            triggerInstallPrompt();
+            this.close();
+        };
+    }
+}
+
+// Trigger install prompt
+async function triggerInstallPrompt() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+        
+        if (outcome === 'accepted') {
+            // Send success notification
+            setTimeout(() => {
+                sendInstallSuccessNotification();
+            }, 1000);
+        }
+        
+        deferredPrompt = null;
+    }
+}
+
+// Send install success notification
+function sendInstallSuccessNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const successNotification = new Notification('✅ App Installed Successfully!', {
+            body: 'ShopEasy by Muzamil has been installed! You can now access it from your home screen. Happy shopping!',
+            icon: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=192&h=192&q=80',
+            badge: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=72&h=72&q=80',
+            tag: 'success',
+            vibrate: [300, 100, 300, 100, 300]
+        });
+
+        successNotification.onclick = function() {
+            window.focus();
+            this.close();
+        };
+    }
+}
+
+// Listen for app installation
+window.addEventListener('appinstalled', (evt) => {
+    console.log('App was installed');
+    isAppInstalled = true;
+    
+    // Send thank you notification
+    setTimeout(() => {
+        sendThankYouNotification();
+    }, 2000);
+});
+
+// Send thank you notification
+function sendThankYouNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const thankYouNotification = new Notification('🙏 Thank You for Installing!', {
+            body: 'Welcome to ShopEasy family! Muzamil appreciates your trust. Enjoy exclusive deals and premium shopping experience.',
+            icon: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=192&h=192&q=80',
+            badge: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=72&h=72&q=80',
+            tag: 'thankyou',
+            vibrate: [200, 100, 200, 100, 200, 100, 200]
+        });
+
+        thankYouNotification.onclick = function() {
+            window.focus();
+            this.close();
+        };
+    }
+}
+
+// Initialize PWA features
+document.addEventListener('DOMContentLoaded', function() {
+    checkIfAppInstalled();
+    
+    // Show app info notification after 5 seconds
+    setTimeout(() => {
+        if (!isAppInstalled) {
+            showAppInfoNotification();
+        }
+    }, 5000);
+});
+
+// Show app info notification
+function showAppInfoNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const infoNotification = new Notification('💫 Amazing Shopping Experience!', {
+            body: 'You\'re using Muzamil\'s premium ShopEasy app! Explore quality products, easy ordering, and excellent customer service.',
+            icon: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=192&h=192&q=80',
+            badge: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=72&h=72&q=80',
+            tag: 'info'
+        });
+
+        infoNotification.onclick = function() {
+            window.focus();
+            this.close();
+        };
+    }
+}
+
 // Debug function
 function testTrackOrder() {
     console.log('Testing trackOrder function...');
