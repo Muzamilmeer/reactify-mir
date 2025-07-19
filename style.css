@@ -52,12 +52,32 @@ body {
     background: var(--gradient);
     min-height: 100vh;
     transition: all 0.3s ease;
+    width: 100%;
+    overflow-x: auto;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+    width: 100%;
+}
+
+/* Full Desktop View */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1600px;
+        padding: 0 40px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 3rem;
+    }
+    
+    .hero-content h2 {
+        font-size: 4.5rem;
+    }
 }
 
 /* Splash Screen */
@@ -1455,6 +1475,30 @@ body {
     to {
         transform: translateX(0);
         opacity: 1;
+    }
+}
+
+/* Desktop Optimization */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1400px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2.5rem;
+    }
+    
+    .hero {
+        min-height: 500px;
+    }
+    
+    .hero-content h2 {
+        font-size: 4rem;
+    }
+    
+    .hero-content p {
+        font-size: 1.4rem;
     }
 }
 
