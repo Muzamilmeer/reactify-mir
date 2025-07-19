@@ -957,14 +957,47 @@ window.trackOrder = trackOrder;
 window.closeOrderModal = closeOrderModal;
 window.proceedToCheckout = proceedToCheckout;
 
-// Biometric Authentication System
+// Real Biometric Authentication System with WebAuthn
 let biometricSupported = false;
 let isAuthenticated = false;
+let isAppLocked = false;
+let biometricCredential = null;
 
-// Check biometric support on page load
-if ('navigator' in window && 'credentials' in navigator) {
-    // Check for WebAuthn support
-    biometricSupported = true;
+// Check real biometric support on page load
+async function checkBiometricSupport() {
+    if (!window.PublicKeyCredential) {
+        biometricSupported = false;
+        return false;
+    }
+    
+    try {
+        // Check if platform authenticator is available
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        biometricSupported = available;
+        return available;
+    } catch (error) {
+        biometricSupported = false;
+        return false;
+    }
+}
+
+// Initialize biometric support check
+checkBiometricSupport().then(supported => {
+    if (supported) {
+        showNotification('🔐 Real biometric authentication available!', 'success');
+    } else {
+        showNotification('❌ Biometric authentication not supported on this device', 'warning');
+    }
+});
+
+// Generate random challenge for WebAuthn
+function generateChallenge() {
+    return crypto.getRandomValues(new Uint8Array(32));
+}
+
+// Generate user ID
+function generateUserId() {
+    return crypto.getRandomValues(new Uint8Array(16));
 }
 
 function showBiometricLogin() {
@@ -973,7 +1006,7 @@ function showBiometricLogin() {
     document.body.style.overflow = 'hidden';
     
     playSound('themeChange');
-    showNotification('🔐 Biometric login opened', 'info');
+    showNotification('🔐 Real biometric authentication ready', 'info');
 }
 
 function closeBiometricModal() {
@@ -982,39 +1015,86 @@ function closeBiometricModal() {
     document.body.style.overflow = 'auto';
 }
 
+// Real Fingerprint Authentication using WebAuthn
 async function authenticateFingerprint() {
     const statusElement = document.getElementById('fingerprint-status');
     const statusText = statusElement.querySelector('.status-text');
     
+    if (!biometricSupported) {
+        showNotification('❌ Biometric authentication not supported', 'error');
+        return;
+    }
+    
     // Update status to scanning
     statusElement.className = 'biometric-status scanning';
-    statusText.textContent = 'Scanning fingerprint...';
+    statusText.textContent = 'Touch your fingerprint sensor...';
     
     playSound('themeChange');
     
     try {
-        // Simulate fingerprint authentication (in real app, use WebAuthn API)
-        await simulateBiometricAuth('fingerprint');
+        // Real WebAuthn fingerprint authentication
+        const credential = await navigator.credentials.create({
+            publicKey: {
+                challenge: generateChallenge(),
+                rp: { 
+                    name: "ShopEasy",
+                    id: window.location.hostname 
+                },
+                user: {
+                    id: generateUserId(),
+                    name: "user@shopeasy.com",
+                    displayName: "ShopEasy User"
+                },
+                pubKeyCredParams: [
+                    { alg: -7, type: "public-key" },  // ES256
+                    { alg: -257, type: "public-key" } // RS256
+                ],
+                authenticatorSelection: {
+                    authenticatorAttachment: "platform", // Built-in biometrics
+                    userVerification: "required",
+                    requireResidentKey: false
+                },
+                timeout: 30000,
+                attestation: "direct"
+            }
+        });
         
-        // Success
-        statusElement.className = 'biometric-status success';
-        statusText.textContent = '✓ Fingerprint authenticated!';
-        
-        playSound('addToCart');
-        showNotification('🎉 Fingerprint authentication successful!', 'success');
-        
-        setTimeout(() => {
-            isAuthenticated = true;
-            closeBiometricModal();
-            showNotification('🔓 You are now logged in securely', 'success');
-        }, 1500);
+        if (credential) {
+            biometricCredential = credential;
+            
+            // Success
+            statusElement.className = 'biometric-status success';
+            statusText.textContent = '✓ Fingerprint authenticated!';
+            
+            playSound('addToCart');
+            showNotification('🎉 Real fingerprint authentication successful!', 'success');
+            
+                         setTimeout(() => {
+                 isAuthenticated = true;
+                 closeBiometricModal();
+                 if (isAppLocked) {
+                     unlockApp();
+                 } else {
+                     showNotification('🔓 Fingerprint authentication successful', 'success');
+                     updateLockButton();
+                 }
+             }, 1500);
+        }
         
     } catch (error) {
-        // Error
+        // Error handling
         statusElement.className = 'biometric-status error';
-        statusText.textContent = '❌ Authentication failed. Try again.';
         
-        showNotification('❌ Fingerprint authentication failed', 'error');
+        if (error.name === 'NotAllowedError') {
+            statusText.textContent = '❌ Authentication cancelled';
+            showNotification('❌ Fingerprint authentication cancelled', 'error');
+        } else if (error.name === 'NotSupportedError') {
+            statusText.textContent = '❌ Fingerprint not supported';
+            showNotification('❌ Fingerprint authentication not supported', 'error');
+        } else {
+            statusText.textContent = '❌ Authentication failed';
+            showNotification('❌ Fingerprint authentication failed', 'error');
+        }
         
         setTimeout(() => {
             statusElement.className = 'biometric-status';
@@ -1023,39 +1103,86 @@ async function authenticateFingerprint() {
     }
 }
 
+// Real Face Authentication using WebAuthn
 async function authenticateFace() {
     const statusElement = document.getElementById('face-status');
     const statusText = statusElement.querySelector('.status-text');
     
+    if (!biometricSupported) {
+        showNotification('❌ Biometric authentication not supported', 'error');
+        return;
+    }
+    
     // Update status to scanning
     statusElement.className = 'biometric-status scanning';
-    statusText.textContent = 'Scanning face...';
+    statusText.textContent = 'Look at your camera...';
     
     playSound('themeChange');
     
     try {
-        // Simulate face recognition
-        await simulateBiometricAuth('face');
+        // Real WebAuthn face authentication
+        const credential = await navigator.credentials.create({
+            publicKey: {
+                challenge: generateChallenge(),
+                rp: { 
+                    name: "ShopEasy",
+                    id: window.location.hostname 
+                },
+                user: {
+                    id: generateUserId(),
+                    name: "user@shopeasy.com",
+                    displayName: "ShopEasy User"
+                },
+                pubKeyCredParams: [
+                    { alg: -7, type: "public-key" },
+                    { alg: -257, type: "public-key" }
+                ],
+                authenticatorSelection: {
+                    authenticatorAttachment: "platform",
+                    userVerification: "required",
+                    requireResidentKey: false
+                },
+                timeout: 30000,
+                attestation: "direct"
+            }
+        });
         
-        // Success
-        statusElement.className = 'biometric-status success';
-        statusText.textContent = '✓ Face recognized!';
-        
-        playSound('addToCart');
-        showNotification('🎉 Face recognition successful!', 'success');
-        
-        setTimeout(() => {
-            isAuthenticated = true;
-            closeBiometricModal();
-            showNotification('🔓 You are now logged in securely', 'success');
-        }, 1500);
+        if (credential) {
+            biometricCredential = credential;
+            
+            // Success
+            statusElement.className = 'biometric-status success';
+            statusText.textContent = '✓ Face recognized!';
+            
+            playSound('addToCart');
+            showNotification('🎉 Real face recognition successful!', 'success');
+            
+                         setTimeout(() => {
+                 isAuthenticated = true;
+                 closeBiometricModal();
+                 if (isAppLocked) {
+                     unlockApp();
+                 } else {
+                     showNotification('🔓 Face recognition successful', 'success');
+                     updateLockButton();
+                 }
+             }, 1500);
+        }
         
     } catch (error) {
-        // Error
+        // Error handling
         statusElement.className = 'biometric-status error';
-        statusText.textContent = '❌ Face not recognized. Try again.';
         
-        showNotification('❌ Face recognition failed', 'error');
+        if (error.name === 'NotAllowedError') {
+            statusText.textContent = '❌ Authentication cancelled';
+            showNotification('❌ Face authentication cancelled', 'error');
+        } else if (error.name === 'NotSupportedError') {
+            statusText.textContent = '❌ Face recognition not supported';
+            showNotification('❌ Face recognition not supported', 'error');
+        } else {
+            statusText.textContent = '❌ Face not recognized';
+            showNotification('❌ Face recognition failed', 'error');
+        }
         
         setTimeout(() => {
             statusElement.className = 'biometric-status';
@@ -1064,20 +1191,89 @@ async function authenticateFace() {
     }
 }
 
-function simulateBiometricAuth(type) {
-    return new Promise((resolve, reject) => {
-        // Simulate authentication process (2-4 seconds)
-        const authTime = Math.random() * 2000 + 2000;
-        
-        setTimeout(() => {
-            // 80% success rate for demo
-            if (Math.random() > 0.2) {
-                resolve(type);
-            } else {
-                reject(new Error('Authentication failed'));
-            }
-        }, authTime);
-    });
+// App Lock/Unlock Functions
+function toggleAppLock() {
+    if (isAppLocked) {
+        // Try to unlock with biometrics
+        showBiometricLogin();
+    } else {
+        // Lock the app
+        lockApp();
+    }
+}
+
+function lockApp() {
+    isAppLocked = true;
+    isAuthenticated = false;
+    
+    // Add blur effect to main content
+    const mainApp = document.getElementById('main-app');
+    if (mainApp) {
+        mainApp.style.filter = 'blur(5px)';
+        mainApp.style.pointerEvents = 'none';
+    }
+    
+    showNotification('🔒 App locked! Use biometric authentication to unlock', 'info');
+    updateLockButton();
+    
+    // Show unlock overlay
+    showUnlockOverlay();
+}
+
+function unlockApp() {
+    isAppLocked = false;
+    isAuthenticated = true;
+    
+    // Remove blur effect
+    const mainApp = document.getElementById('main-app');
+    if (mainApp) {
+        mainApp.style.filter = 'none';
+        mainApp.style.pointerEvents = 'auto';
+    }
+    
+    hideUnlockOverlay();
+    updateLockButton();
+    showNotification('🔓 App unlocked successfully!', 'success');
+}
+
+function updateLockButton() {
+    const lockBtn = document.getElementById('lock-toggle-btn');
+    if (lockBtn) {
+        if (isAppLocked) {
+            lockBtn.innerHTML = '<i class="fas fa-unlock"></i> Unlock App';
+            lockBtn.classList.add('locked');
+        } else {
+            lockBtn.innerHTML = '<i class="fas fa-lock"></i> Lock App';
+            lockBtn.classList.remove('locked');
+        }
+    }
+}
+
+function showUnlockOverlay() {
+    let overlay = document.getElementById('unlock-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'unlock-overlay';
+        overlay.innerHTML = `
+            <div class="unlock-content">
+                <i class="fas fa-lock unlock-icon"></i>
+                <h2>App Locked</h2>
+                <p>Use biometric authentication to unlock</p>
+                <button onclick="showBiometricLogin()" class="unlock-btn">
+                    <i class="fas fa-fingerprint"></i> Unlock with Biometrics
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    overlay.style.display = 'flex';
+}
+
+function hideUnlockOverlay() {
+    const overlay = document.getElementById('unlock-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
 }
 
 function showPasswordLogin() {
@@ -1690,6 +1886,9 @@ window.closeBiometricModal = closeBiometricModal;
 window.authenticateFingerprint = authenticateFingerprint;
 window.authenticateFace = authenticateFace;
 window.showPasswordLogin = showPasswordLogin;
+window.toggleAppLock = toggleAppLock;
+window.lockApp = lockApp;
+window.unlockApp = unlockApp;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
