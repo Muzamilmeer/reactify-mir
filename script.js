@@ -860,5 +860,74 @@ document.addEventListener('keydown', (e) => {
         if (modalOverlay.classList.contains('active')) {
             closeAboutModal();
         }
+        
+        const orderModalOverlay = document.getElementById('order-modal-overlay');
+        if (orderModalOverlay && orderModalOverlay.classList.contains('active')) {
+            closeOrderModal();
+        }
+    }
+});
+
+// Order Tracking Functions
+function trackOrder() {
+    const modalOverlay = document.getElementById('order-modal-overlay');
+    modalOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Play sound
+    playSound('themeChange');
+    
+    // Show notification
+    showNotification('📦 Order tracking opened! Contact us for real-time updates.', 'info');
+}
+
+function closeOrderModal() {
+    const modalOverlay = document.getElementById('order-modal-overlay');
+    modalOverlay.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+function proceedToCheckout() {
+    if (cart.length === 0) {
+        showNotification('❌ Your cart is empty! Add some products first.', 'error');
+        return;
+    }
+    
+    playSound('addToCart');
+    
+    // Create order summary
+    const orderItems = cart.map(item => `${item.name} (Qty: ${item.quantity}) - ₹${item.price * item.quantity}`).join('\n');
+    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    
+    // WhatsApp message for order
+    const whatsappMessage = `🛍️ Hi Muzamil! I want to place an order from ShopEasy:
+
+📦 ORDER DETAILS:
+${orderItems}
+
+💰 Total Amount: ₹${totalAmount}
+
+📍 Please confirm my order and provide delivery details.
+📞 Contact: Customer from ShopEasy App`;
+    
+    const whatsappUrl = `https://wa.me/919103594759?text=${encodeURIComponent(whatsappMessage)}`;
+    
+    // Open WhatsApp
+    window.open(whatsappUrl, '_blank');
+    
+    // Clear cart after order and close cart
+    setTimeout(() => {
+        cart = [];
+        updateCartDisplay();
+        closeCart();
+        showNotification('🛒 Order sent to WhatsApp! We will contact you shortly.', 'success');
+    }, 1000);
+}
+
+// Close order modal when clicking outside
+document.addEventListener('click', (e) => {
+    const orderModalOverlay = document.getElementById('order-modal-overlay');
+    if (orderModalOverlay && e.target === orderModalOverlay) {
+        closeOrderModal();
     }
 });
