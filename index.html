@@ -64,9 +64,6 @@
                         <div class="user-profile" onclick="openAboutModal()" style="cursor: pointer;">
                             <i class="fas fa-user"></i>
                         </div>
-                        <button onclick="testUnlock()" style="background: #ff6b6b; color: white; border: none; padding: 8px 12px; border-radius: 5px; margin-left: 10px; font-size: 12px;">
-                            Test Unlock
-                        </button>
                     </div>
                 </div>
             </div>
@@ -151,25 +148,31 @@
                 </div>
                 <div class="modal-content">
                     <div class="biometric-options">
-                        <div class="biometric-method" onclick="authenticateFingerprint()">
+                        <div class="biometric-setup-info">
+                            <i class="fas fa-shield-alt" style="font-size: 3rem; color: #667eea; margin-bottom: 20px;"></i>
+                            <h3>Setup Biometric Security</h3>
+                            <p>Choose your preferred authentication method to secure your app</p>
+                        </div>
+                        
+                        <div class="biometric-method" onclick="setupFingerprint()">
                             <div class="biometric-icon">
                                 <i class="fas fa-fingerprint"></i>
                             </div>
-                            <h3>Fingerprint</h3>
-                            <p>Use your fingerprint to login securely</p>
+                            <h3>Setup Fingerprint</h3>
+                            <p>Register your fingerprint for secure access</p>
                             <div class="biometric-status" id="fingerprint-status">
-                                <span class="status-text">Touch sensor to authenticate</span>
+                                <span class="status-text">Click to setup fingerprint</span>
                             </div>
                         </div>
                         
-                        <div class="biometric-method" onclick="authenticateFace()">
+                        <div class="biometric-method" onclick="setupFaceRecognition()">
                             <div class="biometric-icon">
                                 <i class="fas fa-user-check"></i>
                             </div>
-                            <h3>Face Recognition</h3>
-                            <p>Look at the camera to login instantly</p>
+                            <h3>Setup Face Recognition</h3>
+                            <p>Register your face for instant access</p>
                             <div class="biometric-status" id="face-status">
-                                <span class="status-text">Position your face in camera</span>
+                                <span class="status-text">Click to setup face recognition</span>
                             </div>
                         </div>
                     </div>
@@ -458,6 +461,33 @@
                 </div>
             </div>
         </footer>
+    </div>
+
+    <!-- Unlock Overlay -->
+    <div id="unlock-overlay" class="unlock-overlay" style="display: none;">
+        <div class="unlock-content">
+            <div class="unlock-icon">
+                <i class="fas fa-lock" id="unlock-lock-icon"></i>
+            </div>
+            <h2>App Locked</h2>
+            <p id="unlock-message">Use your registered biometric to unlock</p>
+            
+            <div class="unlock-buttons">
+                <button class="unlock-btn primary" id="biometric-unlock-btn" onclick="attemptBiometricUnlock()">
+                    <i class="fas fa-fingerprint" id="unlock-btn-icon"></i>
+                    <span id="unlock-btn-text">Unlock with Biometric</span>
+                </button>
+                
+                <button class="unlock-btn secondary" onclick="emergencyUnlock()">
+                    <i class="fas fa-key"></i>
+                    Emergency Unlock
+                </button>
+            </div>
+            
+            <div class="unlock-status" id="unlock-status">
+                <span class="status-text">Ready to authenticate</span>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

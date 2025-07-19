@@ -997,6 +997,8 @@ let isAuthenticated = false;
 let isAppLocked = false;
 let biometricCredential = null;
 let biometricSetupCompleted = false; // Track if user has completed biometric setup
+let storedBiometricCredential = null; // Store the registered biometric credential
+let biometricType = null; // 'fingerprint' or 'face' - which type was setup
 let autoLockTimer = null; // Timer for auto-lock feature
 let autoLockDelay = 30000; // Auto-lock after 30 seconds of inactivity
 
@@ -1074,8 +1076,10 @@ function closeBiometricModal() {
     }
 }
 
-// Real Fingerprint Authentication using WebAuthn
-async function authenticateFingerprint() {
+// Setup Fingerprint - Register user's fingerprint for first time
+async function setupFingerprint() {
+    console.log('🔐 Starting fingerprint setup...');
+    
     const statusElement = document.getElementById('fingerprint-status');
     const statusText = statusElement.querySelector('.status-text');
     
@@ -1084,20 +1088,20 @@ async function authenticateFingerprint() {
         return;
     }
     
-    // Update status to scanning
+    // Update status to setting up
     statusElement.className = 'biometric-status scanning';
-    statusText.textContent = 'Touch your fingerprint sensor...';
+    statusText.textContent = 'Setting up fingerprint...';
     
     playSound('themeChange');
     
     try {
-        // Real WebAuthn fingerprint authentication
+        // Real WebAuthn fingerprint setup/registration
         const credential = await navigator.credentials.create({
             publicKey: {
                 challenge: generateChallenge(),
                 rp: { 
                     name: "ShopEasy",
-                    id: window.location.hostname 
+                    id: window.location.hostname || "localhost"
                 },
                 user: {
                     id: generateUserId(),
@@ -1113,62 +1117,73 @@ async function authenticateFingerprint() {
                     userVerification: "required",
                     requireResidentKey: false
                 },
-                timeout: 30000,
+                timeout: 60000,
                 attestation: "direct"
             }
         });
         
         if (credential) {
+            console.log('✅ Fingerprint setup successful!');
+            
+            // Store the registered credential
+            storedBiometricCredential = {
+                id: credential.id,
+                rawId: Array.from(new Uint8Array(credential.rawId)),
+                type: credential.type
+            };
+            biometricType = 'fingerprint';
             biometricCredential = credential;
+            biometricSetupCompleted = true;
+            isAuthenticated = true;
+            
+            // Store in localStorage for persistence
+            localStorage.setItem('biometricCredential', JSON.stringify(storedBiometricCredential));
+            localStorage.setItem('biometricType', biometricType);
+            localStorage.setItem('biometricSetupCompleted', 'true');
             
             // Success
             statusElement.className = 'biometric-status success';
-            statusText.textContent = '✓ Fingerprint authenticated!';
+            statusText.textContent = '✓ Fingerprint registered!';
             
             playSound('addToCart');
-            showNotification('🎉 Real fingerprint authentication successful!', 'success');
+            showNotification('🎉 Fingerprint setup completed!', 'success');
             
             setTimeout(() => {
-                console.log('🔐 Processing fingerprint authentication success...');
-                isAuthenticated = true;
-                biometricSetupCompleted = true; // Mark biometric setup as completed
+                console.log('🔐 Fingerprint setup completed, closing modal...');
                 closeBiometricModal();
-                
-                if (isAppLocked) {
-                    console.log('🔓 App is locked, calling unlockApp()');
-                    unlockApp();
-                } else {
-                    console.log('ℹ️ App not locked, showing success and enabling lock feature');
-                    showNotification('🔓 Fingerprint authentication successful! Lock feature now enabled.', 'success');
-                    updateLockButton();
-                }
+                showNotification('🔓 Fingerprint setup successful! App lock is now available.', 'success');
+                updateLockButton();
             }, 1500);
         }
         
     } catch (error) {
+        console.error('❌ Fingerprint setup failed:', error);
+        
         // Error handling
         statusElement.className = 'biometric-status error';
         
         if (error.name === 'NotAllowedError') {
-            statusText.textContent = '❌ Authentication cancelled';
-            showNotification('❌ Fingerprint authentication cancelled', 'error');
+            statusText.textContent = '❌ Setup cancelled';
+            showNotification('❌ Fingerprint setup cancelled', 'error');
         } else if (error.name === 'NotSupportedError') {
             statusText.textContent = '❌ Fingerprint not supported';
-            showNotification('❌ Fingerprint authentication not supported', 'error');
+            showNotification('❌ Fingerprint not supported on this device', 'error');
         } else {
-            statusText.textContent = '❌ Authentication failed';
-            showNotification('❌ Fingerprint authentication failed', 'error');
+            statusText.textContent = '❌ Setup failed';
+            showNotification('❌ Fingerprint setup failed. Please try again.', 'error');
         }
         
         setTimeout(() => {
             statusElement.className = 'biometric-status';
-            statusText.textContent = 'Touch sensor to authenticate';
+            statusText.textContent = 'Click to setup fingerprint';
         }, 3000);
     }
 }
 
-// Real Face Authentication using WebAuthn
-async function authenticateFace() {
+// Setup Face Recognition - Register user's face for first time
+async function setupFaceRecognition() {
+    console.log('🔐 Starting face recognition setup...');
+    
     const statusElement = document.getElementById('face-status');
     const statusText = statusElement.querySelector('.status-text');
     
@@ -1177,20 +1192,20 @@ async function authenticateFace() {
         return;
     }
     
-    // Update status to scanning
+    // Update status to setting up
     statusElement.className = 'biometric-status scanning';
-    statusText.textContent = 'Look at your camera...';
+    statusText.textContent = 'Setting up face recognition...';
     
     playSound('themeChange');
     
     try {
-        // Real WebAuthn face authentication
+        // Real WebAuthn face recognition setup/registration
         const credential = await navigator.credentials.create({
             publicKey: {
                 challenge: generateChallenge(),
                 rp: { 
                     name: "ShopEasy",
-                    id: window.location.hostname 
+                    id: window.location.hostname || "localhost"
                 },
                 user: {
                     id: generateUserId(),
@@ -1206,57 +1221,121 @@ async function authenticateFace() {
                     userVerification: "required",
                     requireResidentKey: false
                 },
-                timeout: 30000,
+                timeout: 60000,
                 attestation: "direct"
             }
         });
         
         if (credential) {
+            console.log('✅ Face recognition setup successful!');
+            
+            // Store the registered credential
+            storedBiometricCredential = {
+                id: credential.id,
+                rawId: Array.from(new Uint8Array(credential.rawId)),
+                type: credential.type
+            };
+            biometricType = 'face';
             biometricCredential = credential;
+            biometricSetupCompleted = true;
+            isAuthenticated = true;
+            
+            // Store in localStorage for persistence
+            localStorage.setItem('biometricCredential', JSON.stringify(storedBiometricCredential));
+            localStorage.setItem('biometricType', biometricType);
+            localStorage.setItem('biometricSetupCompleted', 'true');
             
             // Success
             statusElement.className = 'biometric-status success';
-            statusText.textContent = '✓ Face recognized!';
+            statusText.textContent = '✓ Face registered!';
             
             playSound('addToCart');
-            showNotification('🎉 Real face recognition successful!', 'success');
+            showNotification('🎉 Face recognition setup completed!', 'success');
             
             setTimeout(() => {
-                console.log('🔐 Processing face authentication success...');
-                isAuthenticated = true;
-                biometricSetupCompleted = true; // Mark biometric setup as completed
+                console.log('🔐 Face recognition setup completed, closing modal...');
                 closeBiometricModal();
-                
-                if (isAppLocked) {
-                    console.log('🔓 App is locked, calling unlockApp()');
-                    unlockApp();
-                } else {
-                    console.log('ℹ️ App not locked, showing success and enabling lock feature');
-                    showNotification('🔓 Face recognition successful! Lock feature now enabled.', 'success');
-                    updateLockButton();
-                }
+                showNotification('🔓 Face recognition setup successful! App lock is now available.', 'success');
+                updateLockButton();
             }, 1500);
         }
         
     } catch (error) {
+        console.error('❌ Face recognition setup failed:', error);
+        
         // Error handling
         statusElement.className = 'biometric-status error';
         
         if (error.name === 'NotAllowedError') {
-            statusText.textContent = '❌ Authentication cancelled';
-            showNotification('❌ Face authentication cancelled', 'error');
+            statusText.textContent = '❌ Setup cancelled';
+            showNotification('❌ Face recognition setup cancelled', 'error');
         } else if (error.name === 'NotSupportedError') {
             statusText.textContent = '❌ Face recognition not supported';
-            showNotification('❌ Face recognition not supported', 'error');
+            showNotification('❌ Face recognition not supported on this device', 'error');
         } else {
-            statusText.textContent = '❌ Face not recognized';
-            showNotification('❌ Face recognition failed', 'error');
+            statusText.textContent = '❌ Setup failed';
+            showNotification('❌ Face recognition setup failed. Please try again.', 'error');
         }
         
         setTimeout(() => {
             statusElement.className = 'biometric-status';
-            statusText.textContent = 'Position your face in camera';
+            statusText.textContent = 'Click to setup face recognition';
         }, 3000);
+    }
+}
+
+// Verify Biometric Authentication - Check against stored credential
+async function verifyBiometricAuthentication() {
+    console.log('🔐 Starting biometric verification...');
+    
+    if (!storedBiometricCredential) {
+        console.error('❌ No stored biometric credential found');
+        showNotification('❌ No biometric setup found. Please setup biometric first.', 'error');
+        return false;
+    }
+    
+    try {
+        // Convert stored rawId back to ArrayBuffer
+        const credentialId = new Uint8Array(storedBiometricCredential.rawId).buffer;
+        
+        // Create authentication request
+        const publicKeyCredentialRequestOptions = {
+            challenge: generateChallenge(),
+            allowCredentials: [{
+                id: credentialId,
+                type: 'public-key',
+                transports: ['internal']
+            }],
+            timeout: 30000,
+            userVerification: 'required'
+        };
+        
+        console.log('📱 Requesting biometric verification...');
+        
+        // Request authentication with the stored credential
+        const assertion = await navigator.credentials.get({
+            publicKey: publicKeyCredentialRequestOptions
+        });
+        
+        if (assertion && assertion.id === storedBiometricCredential.id) {
+            console.log('✅ Biometric verification successful!');
+            isAuthenticated = true;
+            return true;
+        } else {
+            console.error('❌ Biometric verification failed - credential mismatch');
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('❌ Biometric verification error:', error);
+        
+        if (error.name === 'NotAllowedError') {
+            showNotification('❌ Biometric verification cancelled', 'error');
+        } else {
+            showNotification('❌ Biometric verification failed. Please try again.', 'error');
+        }
+        
+        return false;
     }
 }
 
@@ -1277,11 +1356,29 @@ function toggleAppLock() {
     }
 }
 
-function lockApp() {
-    console.log('🔒 Locking app...');
+async function lockApp() {
+    if (!biometricSetupCompleted) {
+        console.log('❌ Cannot lock: Biometric setup not completed');
+        showNotification('❌ Please complete biometric setup first to enable app lock.', 'error');
+        showBiometricSetupModal();
+        return;
+    }
+    
+    console.log('🔒 Attempting to lock app - verifying biometric first...');
+    
+    // First verify biometric authentication before locking
+    const verified = await verifyBiometricAuthentication();
+    
+    if (!verified) {
+        console.log('❌ Cannot lock: Biometric verification failed');
+        showNotification('❌ Biometric verification required to lock the app.', 'error');
+        return;
+    }
+    
+    console.log('🔒 Biometric verified, locking app...');
     
     isAppLocked = true;
-    isAuthenticated = false;
+    isAuthenticated = false; // Reset authentication after lock
     
     // Stop auto-lock timer
     stopAutoLockTimer();
@@ -1296,7 +1393,8 @@ function lockApp() {
     
     // Show notification before locking
     try {
-        showNotification('🔒 App locked! Use biometric authentication to unlock', 'info');
+        const authType = biometricType === 'fingerprint' ? 'fingerprint' : 'face recognition';
+        showNotification(`🔒 App locked! Use ${authType} to unlock.`, 'info');
         console.log('✅ Lock notification shown');
     } catch (error) {
         console.log('⚠️ Could not show notification:', error);
@@ -1419,30 +1517,27 @@ function updateLockButton() {
 }
 
 function showUnlockOverlay() {
-    let overlay = document.getElementById('unlock-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'unlock-overlay';
-        overlay.innerHTML = `
-            <div class="unlock-content">
-                <i class="fas fa-lock unlock-icon"></i>
-                <h2>App Locked</h2>
-                <p>Use biometric authentication to unlock</p>
-                <button onclick="showBiometricLogin()" class="unlock-btn">
-                    <i class="fas fa-fingerprint"></i> Unlock with Biometrics
-                </button>
-                <button onclick="emergencyUnlock()" class="unlock-btn" style="background: #ff6b6b; margin-top: 10px;">
-                    <i class="fas fa-key"></i> Emergency Unlock
-                </button>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-                    <p style="font-size: 12px; opacity: 0.8; margin: 0;">Auto-lock: 30 seconds after unlock</p>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
+    const overlay = document.getElementById('unlock-overlay');
+    if (overlay) {
+        // Update overlay content based on biometric type
+        updateUnlockOverlay();
+        
+        // Reset status
+        const unlockStatus = document.getElementById('unlock-status');
+        const statusText = unlockStatus?.querySelector('.status-text');
+        const unlockBtn = document.getElementById('biometric-unlock-btn');
+        const btnText = document.getElementById('unlock-btn-text');
+        
+        if (unlockStatus) unlockStatus.className = 'unlock-status';
+        if (statusText) statusText.textContent = 'Ready to authenticate';
+        if (unlockBtn) unlockBtn.disabled = false;
+        if (btnText) btnText.textContent = biometricType === 'fingerprint' ? 'Unlock with Fingerprint' : 'Unlock with Face';
+        
+        overlay.style.display = 'flex';
+        console.log('✅ Unlock overlay shown');
+    } else {
+        console.error('❌ Unlock overlay not found in DOM');
     }
-    overlay.style.display = 'flex';
-    console.log('✅ Unlock overlay displayed');
 }
 
 function hideUnlockOverlay() {
@@ -2111,8 +2206,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Global function access
 window.showBiometricLogin = showBiometricLogin;
 window.closeBiometricModal = closeBiometricModal;
-window.authenticateFingerprint = authenticateFingerprint;
-window.authenticateFace = authenticateFace;
+window.setupFingerprint = setupFingerprint;
+window.setupFaceRecognition = setupFaceRecognition;
 window.showPasswordLogin = showPasswordLogin;
 window.toggleAppLock = toggleAppLock;
 window.lockApp = lockApp;
@@ -2123,24 +2218,94 @@ window.startAutoLockTimer = startAutoLockTimer;
 window.stopAutoLockTimer = stopAutoLockTimer;
 window.resetAutoLockTimer = resetAutoLockTimer;
 
-// Test function for debugging
-function testUnlock() {
-    console.log('🧪 Test unlock button clicked');
-    console.log('Current app state - Locked:', isAppLocked, 'Setup:', biometricSetupCompleted);
+// Attempt biometric unlock from overlay
+async function attemptBiometricUnlock() {
+    console.log('🔐 Attempting biometric unlock from overlay...');
     
-    if (isAppLocked) {
-        console.log('App is locked, calling unlockApp()');
-        unlockApp();
-    } else {
-        console.log('App is not locked, forcing lock first');
-        if (biometricSetupCompleted) {
-            lockApp();
+    const unlockStatus = document.getElementById('unlock-status');
+    const statusText = unlockStatus.querySelector('.status-text');
+    const unlockBtn = document.getElementById('biometric-unlock-btn');
+    const btnText = document.getElementById('unlock-btn-text');
+    
+    // Update UI to show authentication in progress
+    unlockStatus.className = 'unlock-status authenticating';
+    statusText.textContent = 'Authenticating...';
+    unlockBtn.disabled = true;
+    btnText.textContent = 'Authenticating...';
+    
+    try {
+        const verified = await verifyBiometricAuthentication();
+        
+        if (verified) {
+            console.log('✅ Biometric unlock successful');
+            
+            // Show success
+            unlockStatus.className = 'unlock-status success';
+            statusText.textContent = '✓ Authentication successful!';
+            btnText.textContent = 'Unlocking...';
+            
+            // Wait a moment then unlock
+            setTimeout(() => {
+                unlockApp();
+            }, 1000);
+            
         } else {
-            alert('Complete biometric setup first!');
+            throw new Error('Biometric verification failed');
         }
+        
+    } catch (error) {
+        console.error('❌ Biometric unlock failed:', error);
+        
+        // Show error
+        unlockStatus.className = 'unlock-status error';
+        statusText.textContent = '❌ Authentication failed';
+        btnText.textContent = 'Try Again';
+        unlockBtn.disabled = false;
+        
+        // Reset after delay
+        setTimeout(() => {
+            unlockStatus.className = 'unlock-status';
+            statusText.textContent = 'Ready to authenticate';
+            btnText.textContent = 'Unlock with Biometric';
+        }, 3000);
     }
 }
-window.testUnlock = testUnlock;
+
+// Emergency unlock function
+function emergencyUnlock() {
+    console.log('🚨 Emergency unlock triggered');
+    
+    const confirmed = confirm('Emergency unlock will bypass biometric security. Are you sure?');
+    if (confirmed) {
+        console.log('🚨 Emergency unlock confirmed');
+        unlockApp();
+        showNotification('🚨 Emergency unlock used - Please reconfigure biometric security', 'warning');
+    }
+}
+
+// Update unlock overlay based on biometric type
+function updateUnlockOverlay() {
+    const unlockMessage = document.getElementById('unlock-message');
+    const unlockBtnIcon = document.getElementById('unlock-btn-icon');
+    const unlockBtnText = document.getElementById('unlock-btn-text');
+    
+    if (biometricType === 'fingerprint') {
+        unlockMessage.textContent = 'Use your registered fingerprint to unlock';
+        unlockBtnIcon.className = 'fas fa-fingerprint';
+        unlockBtnText.textContent = 'Unlock with Fingerprint';
+    } else if (biometricType === 'face') {
+        unlockMessage.textContent = 'Use your registered face to unlock';
+        unlockBtnIcon.className = 'fas fa-user-check';
+        unlockBtnText.textContent = 'Unlock with Face';
+    } else {
+        unlockMessage.textContent = 'Use your registered biometric to unlock';
+        unlockBtnIcon.className = 'fas fa-fingerprint';
+        unlockBtnText.textContent = 'Unlock with Biometric';
+    }
+}
+
+window.attemptBiometricUnlock = attemptBiometricUnlock;
+window.emergencyUnlock = emergencyUnlock;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
@@ -2163,5 +2328,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         // Track order button not found
+    }
+});
+
+// Load stored biometric data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📱 Loading stored biometric data...');
+    
+    try {
+        const storedCredential = localStorage.getItem('biometricCredential');
+        const storedType = localStorage.getItem('biometricType');
+        const setupCompleted = localStorage.getItem('biometricSetupCompleted');
+        
+        if (storedCredential && storedType && setupCompleted === 'true') {
+            storedBiometricCredential = JSON.parse(storedCredential);
+            biometricType = storedType;
+            biometricSetupCompleted = true;
+            isAuthenticated = false; // Always start unauthenticated
+            
+            console.log('✅ Stored biometric data loaded:', {
+                type: biometricType,
+                hasCredential: !!storedBiometricCredential,
+                setupCompleted: biometricSetupCompleted
+            });
+            
+            // Update lock button state
+            updateLockButton();
+        } else {
+            console.log('ℹ️ No stored biometric data found');
+        }
+    } catch (error) {
+        console.error('❌ Error loading stored biometric data:', error);
+        // Clear corrupted data
+        localStorage.removeItem('biometricCredential');
+        localStorage.removeItem('biometricType');
+        localStorage.removeItem('biometricSetupCompleted');
     }
 });
