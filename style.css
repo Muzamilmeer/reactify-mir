@@ -2088,6 +2088,18 @@ body {
 
 .chat-widget.open {
     display: block;
+}
+
+.chat-widget.minimized {
+    max-height: 60px;
+}
+
+.chat-widget.minimized .chat-body {
+    display: none;
+}
+
+.chat-widget.open {
+    display: block;
     animation: slideInUp 0.3s ease;
 }
 

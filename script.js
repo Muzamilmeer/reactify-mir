@@ -1115,18 +1115,31 @@ let chatResponses = {
     'mohabbat': '💕 Mohabbat to customers se hai! Kya chahiye aapko?',
     'miss you': '🥺 Aww, I miss talking to lovely customers too! I\'m always here when you need me.',
     'like you': '😊 I like you too! You seem like such a wonderful person. Let me help you find something special.',
-    'marry me': '😄 Haha, I\'m flattered! But I\'m married to customer service! Let me help you with shopping instead.',
-    'girlfriend': '😅 I\'m already committed to helping customers! But I can help you find gifts for your girlfriend.',
-    'boyfriend': '😊 I\'m just your friendly shopping assistant! Need help finding something for your boyfriend?'
+    'love you': '💕 Thank you for the love! But I\'m already committed to my beautiful wife Rukhaya. Let me help you find something special for your loved one!',
+    'i love you': '💖 I appreciate the love! But my heart belongs to my wife Rukhaya. How about I help you find something amazing for someone you love?',
+    'marry me': '😄 Haha, I\'m flattered! But I\'m already happily married to my beautiful wife Rukhaya. Let me help you with shopping instead!',
+    'married': '💍 Yes, I\'m happily married to my lovely wife Rukhaya! She\'s my everything. How can I help you today?',
+    'wife': '👰 My wife Rukhaya is the most beautiful and amazing woman in the world! I\'m blessed to have her. What can I help you find?',
+    'girlfriend': '😅 I don\'t have a girlfriend - I have an amazing wife named Rukhaya! Can I help you find gifts for your girlfriend?',
+    'boyfriend': '😊 I\'m a happily married man to my wife Rukhaya! Need help finding something for your boyfriend?',
+    'single': '💍 No, I\'m not single! I\'m happily married to my beautiful wife Rukhaya. How can I assist you with shopping?',
+    'relationship': '💕 I\'m in a wonderful relationship - married to my lovely wife Rukhaya! What can I help you find today?',
+    'rukhaya': '😍 Rukhaya is my beautiful wife and the love of my life! I\'m so lucky to have her. How can I help you?',
+    'shaadi': '💒 Haan bhai, meri shaadi ho gayi hai Rukhaya se! Bahut khush hun. Aapki kya help kar sakta hun?',
+    'biwi': '👰 Meri biwi Rukhaya hai, bahut pyaari hai! Main bahut khush hun. Aapko kya chahiye?'
 };
 
 function openChat() {
     const chatWidget = document.getElementById('chat-widget');
     const chatFloatBtn = document.getElementById('chat-float-btn');
     
+    // Always show chat widget when clicked
+    chatWidget.style.display = 'block';
     chatWidget.classList.add('open');
     chatWidget.classList.remove('minimized');
-    chatFloatBtn.style.display = 'none';
+    if (chatFloatBtn) {
+        chatFloatBtn.style.display = 'none';
+    }
     chatOpen = true;
     
     // Clear notifications
@@ -1146,24 +1159,24 @@ function toggleChat() {
     const chatWidget = document.getElementById('chat-widget');
     const chatBody = document.getElementById('chat-body');
     const chatToggleIcon = document.getElementById('chat-toggle-icon');
-    const chatFloatBtn = document.getElementById('chat-float-btn');
     
     if (chatWidget.classList.contains('minimized')) {
         // Expand
         chatWidget.classList.remove('minimized');
         chatBody.style.display = 'flex';
-        chatToggleIcon.className = 'fas fa-chevron-up';
+        if (chatToggleIcon) {
+            chatToggleIcon.className = 'fas fa-chevron-up';
+        }
+        chatOpen = true;
     } else {
-        // Minimize
+        // Minimize (but keep widget available)
         chatWidget.classList.add('minimized');
         chatBody.style.display = 'none';
-        chatToggleIcon.className = 'fas fa-chevron-down';
-        
-        setTimeout(() => {
-            chatWidget.classList.remove('open');
-            chatFloatBtn.style.display = 'flex';
-            chatOpen = false;
-        }, 300);
+        if (chatToggleIcon) {
+            chatToggleIcon.className = 'fas fa-chevron-down';
+        }
+        // Don't hide the widget completely - keep it minimized
+        chatOpen = false;
     }
     
     playSound('themeChange');
@@ -1317,7 +1330,7 @@ function getChatResponse(message) {
 
 // Initialize chat on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Show chat notifications after 5 seconds
+    // Show chat notifications after 3 seconds
     setTimeout(() => {
         const notification = document.getElementById('chat-notification');
         const heroNotification = document.getElementById('chat-notification-hero');
@@ -1327,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (heroNotification && !chatOpen) {
             heroNotification.style.display = 'flex';
         }
-    }, 5000);
+    }, 3000);
     
     // Enter key support for chat
     const chatInput = document.getElementById('chat-input');
