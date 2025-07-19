@@ -3,8 +3,11 @@
 // App State
 let cart = [];
 let products = [];
+let wishlist = [];
 let currentCategory = 'all';
 let currentView = 'grid';
+let currentTheme = 'light';
+let notifications = [];
 
 // Sample Products Data
 const sampleProducts = [
@@ -252,6 +255,23 @@ const playSound = (type) => {
             setTimeout(() => playTone(1046.50, 0.3), 400); // C6
             setTimeout(() => playTone(1318.51, 0.4), 500); // E6 - magical high note
             break;
+        case 'wishlistAdd':
+            // Wishlist add sound - sweet ascending notes
+            playTone(659.25, 0.15); // E5
+            setTimeout(() => playTone(783.99, 0.15), 80); // G5
+            setTimeout(() => playTone(1046.50, 0.2), 160); // C6
+            break;
+        case 'wishlistRemove':
+            // Wishlist remove sound - descending notes
+            playTone(783.99, 0.15); // G5
+            setTimeout(() => playTone(659.25, 0.15), 80); // E5
+            setTimeout(() => playTone(523.25, 0.2), 160); // C5
+            break;
+        case 'themeChange':
+            // Theme change sound - quick beep
+            playTone(1046.50, 0.1); // C6
+            setTimeout(() => playTone(1318.51, 0.15), 60); // E6
+            break;
     }
 };
 
@@ -332,6 +352,9 @@ function initializeEventListeners() {
             behavior: 'smooth' 
         });
     });
+    
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 }
 
 // Load and Display Products
@@ -363,6 +386,9 @@ function createProductCard(product) {
         <div class="product-image">
             <img src="${product.image}" alt="${product.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 0;">
             <span class="product-badge">${product.badge}</span>
+            <div class="wishlist-btn" onclick="toggleWishlist(${product.id})" data-id="${product.id}">
+                <i class="far fa-heart"></i>
+            </div>
         </div>
         <div class="product-info">
             <h4 class="product-title">${product.title}</h4>
@@ -377,9 +403,16 @@ function createProductCard(product) {
                 </div>
                 <span class="rating-text">${product.rating} (${product.reviews} reviews)</span>
             </div>
-            <button class="add-to-cart" onclick="addToCart(${product.id})">
-                Add to Cart
-            </button>
+            <div class="product-actions">
+                <button class="add-to-cart" onclick="addToCart(${product.id})">
+                    <i class="fas fa-shopping-cart"></i>
+                    Add to Cart
+                </button>
+                <button class="quick-view-btn" onclick="quickView(${product.id})">
+                    <i class="fas fa-eye"></i>
+                    Quick View
+                </button>
+            </div>
         </div>
     `;
     
@@ -708,4 +741,87 @@ function handleSwipe() {
             closeCart();
         }
     }
+}
+
+// Theme Toggle Function
+function toggleTheme() {
+    const themeIcon = document.querySelector('#theme-toggle i');
+    themeIcon.parentElement.classList.add('rotating');
+    
+    playSound('themeChange');
+    
+    setTimeout(() => {
+        if (currentTheme === 'light') {
+            document.body.setAttribute('data-theme', 'dark');
+            themeIcon.className = 'fas fa-sun';
+            currentTheme = 'dark';
+            showNotification('🌙 Dark mode enabled', 'theme');
+        } else {
+            document.body.removeAttribute('data-theme');
+            themeIcon.className = 'fas fa-moon';
+            currentTheme = 'light';
+            showNotification('☀️ Light mode enabled', 'theme');
+        }
+        
+        themeIcon.parentElement.classList.remove('rotating');
+    }, 250);
+}
+
+// Wishlist Functions
+function toggleWishlist(productId) {
+    const wishlistBtn = document.querySelector(`[data-id="${productId}"]`);
+    const product = products.find(p => p.id === productId);
+    
+    if (wishlist.find(item => item.id === productId)) {
+        // Remove from wishlist
+        wishlist = wishlist.filter(item => item.id !== productId);
+        wishlistBtn.classList.remove('active');
+        wishlistBtn.innerHTML = '<i class="far fa-heart"></i>';
+        playSound('wishlistRemove');
+        showNotification(`💔 ${product.title} removed from wishlist`, 'wishlist');
+    } else {
+        // Add to wishlist
+        wishlist.push(product);
+        wishlistBtn.classList.add('active');
+        wishlistBtn.innerHTML = '<i class="fas fa-heart"></i>';
+        playSound('wishlistAdd');
+        showNotification(`💖 ${product.title} added to wishlist`, 'wishlist');
+    }
+}
+
+// Quick View Function
+function quickView(productId) {
+    const product = products.find(p => p.id === productId);
+    showNotification(`👁️ Quick view: ${product.title}`, 'info');
+    // TODO: Implement quick view modal
+}
+
+// Notification System
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span>${message}</span>
+            <button class="notification-close">&times;</button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+    
+    // Close button
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    });
 }
