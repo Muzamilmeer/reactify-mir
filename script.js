@@ -280,6 +280,20 @@ document.addEventListener('DOMContentLoaded', function() {
     products = [...sampleProducts];
     showSplashScreen();
     initializeEventListeners();
+    
+    // Check biometric support after DOM is ready
+    setTimeout(() => {
+        checkBiometricSupport().then(supported => {
+            if (supported) {
+                showNotification('🔐 Real biometric authentication available!', 'success');
+            } else {
+                showNotification('❌ Biometric authentication not supported on this device', 'warning');
+            }
+        }).catch(error => {
+            // Silently handle biometric check errors
+            console.log('Biometric check error:', error);
+        });
+    }, 2000); // Wait 2 seconds after app loads
 });
 
 // Splash Screen
@@ -965,39 +979,52 @@ let biometricCredential = null;
 
 // Check real biometric support on page load
 async function checkBiometricSupport() {
-    if (!window.PublicKeyCredential) {
-        biometricSupported = false;
-        return false;
-    }
-    
     try {
+        if (!window.PublicKeyCredential) {
+            biometricSupported = false;
+            return false;
+        }
+        
         // Check if platform authenticator is available
         const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         biometricSupported = available;
         return available;
     } catch (error) {
+        // Handle any errors gracefully
+        console.log('Biometric support check failed:', error);
         biometricSupported = false;
         return false;
     }
 }
 
-// Initialize biometric support check
-checkBiometricSupport().then(supported => {
-    if (supported) {
-        showNotification('🔐 Real biometric authentication available!', 'success');
-    } else {
-        showNotification('❌ Biometric authentication not supported on this device', 'warning');
-    }
-});
+// Biometric support will be checked after DOM loads
 
 // Generate random challenge for WebAuthn
 function generateChallenge() {
-    return crypto.getRandomValues(new Uint8Array(32));
+    try {
+        return crypto.getRandomValues(new Uint8Array(32));
+    } catch (error) {
+        // Fallback for older browsers
+        const array = new Uint8Array(32);
+        for (let i = 0; i < array.length; i++) {
+            array[i] = Math.floor(Math.random() * 256);
+        }
+        return array;
+    }
 }
 
 // Generate user ID
 function generateUserId() {
-    return crypto.getRandomValues(new Uint8Array(16));
+    try {
+        return crypto.getRandomValues(new Uint8Array(16));
+    } catch (error) {
+        // Fallback for older browsers
+        const array = new Uint8Array(16);
+        for (let i = 0; i < array.length; i++) {
+            array[i] = Math.floor(Math.random() * 256);
+        }
+        return array;
+    }
 }
 
 function showBiometricLogin() {
