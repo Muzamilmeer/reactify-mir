@@ -1097,7 +1097,27 @@ let chatResponses = {
     'hi': 'Hi there! Welcome to ShopEasy. What can I help you with?',
     'help': 'I\'m here to help! You can ask me about orders, products, payments, or anything else.',
     'thanks': 'You\'re welcome! Happy to help. Is there anything else you need?',
-    'thank you': 'My pleasure! Feel free to reach out anytime you need assistance.'
+    'thank you': 'My pleasure! Feel free to reach out anytime you need assistance.',
+    
+    // Romantic/Sweet responses
+    'love': '💕 Aww, that\'s so sweet! I love helping wonderful customers like you. What can I do for you today?',
+    'pyaar': '💖 Bahut pyaar! Main bhi aapse pyaar se baat karta hun. Kya help chahiye?',
+    'beautiful': '😊 You\'re so kind! Thank you for the sweet words. How can I make your shopping experience beautiful?',
+    'handsome': '😄 Haha, thank you! You\'re very sweet. Let me help you find something amazing!',
+    'cute': '🥰 That\'s so cute of you to say! I try my best to be helpful. What are you looking for?',
+    'sweet': '🍯 You\'re the sweet one! I love chatting with lovely customers. How can I assist you?',
+    'darling': '💝 Aww darling, you made my day! I\'m here to help you with anything you need.',
+    'honey': '🍯 Honey, you\'re so nice! What can I help you find today?',
+    'dear': '💌 Dear customer, you\'re absolutely wonderful! How can I make your day better?',
+    'jaan': '💕 Jaan, aap bahut acche hain! Main aapki kya madad kar sakta hun?',
+    'dil': '❤️ Dil se thank you! Aapke dil mein kya hai jo chahiye?',
+    'ishq': '💖 Ishq to ShopEasy se karo! Main aapki shopping mein madad karunga.',
+    'mohabbat': '💕 Mohabbat to customers se hai! Kya chahiye aapko?',
+    'miss you': '🥺 Aww, I miss talking to lovely customers too! I\'m always here when you need me.',
+    'like you': '😊 I like you too! You seem like such a wonderful person. Let me help you find something special.',
+    'marry me': '😄 Haha, I\'m flattered! But I\'m married to customer service! Let me help you with shopping instead.',
+    'girlfriend': '😅 I\'m already committed to helping customers! But I can help you find gifts for your girlfriend.',
+    'boyfriend': '😊 I\'m just your friendly shopping assistant! Need help finding something for your boyfriend?'
 };
 
 function openChat() {
@@ -1111,12 +1131,12 @@ function openChat() {
     
     // Clear notifications
     const notification = document.getElementById('chat-notification');
-    const headerNotification = document.getElementById('chat-notification-header');
+    const heroNotification = document.getElementById('chat-notification-hero');
     if (notification) {
         notification.style.display = 'none';
     }
-    if (headerNotification) {
-        headerNotification.style.display = 'none';
+    if (heroNotification) {
+        heroNotification.style.display = 'none';
     }
     
     playSound('themeChange');
@@ -1300,12 +1320,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show chat notifications after 5 seconds
     setTimeout(() => {
         const notification = document.getElementById('chat-notification');
-        const headerNotification = document.getElementById('chat-notification-header');
+        const heroNotification = document.getElementById('chat-notification-hero');
         if (notification && !chatOpen) {
             notification.style.display = 'flex';
         }
-        if (headerNotification && !chatOpen) {
-            headerNotification.style.display = 'flex';
+        if (heroNotification && !chatOpen) {
+            heroNotification.style.display = 'flex';
         }
     }, 5000);
     
