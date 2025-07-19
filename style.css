@@ -2012,7 +2012,7 @@ body {
 .chat-widget {
     position: fixed;
     top: 100px;
-    right: 20px;
+    left: 20px;
     width: 350px;
     max-height: 450px;
     background: var(--card-bg);
@@ -2217,8 +2217,8 @@ body {
 
 .chat-float-btn {
     position: fixed;
-    top: 120px;
-    right: 20px;
+    top: 80px;
+    left: 20px;
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -2269,8 +2269,8 @@ body {
 @media (max-width: 768px) {
     .chat-widget {
         width: calc(100vw - 40px);
-        right: 20px;
         left: 20px;
+        right: 20px;
         top: 80px;
         max-height: 400px;
     }
@@ -2280,8 +2280,8 @@ body {
     }
     
     .chat-float-btn {
-        top: 100px;
-        right: 20px;
+        top: 80px;
+        left: 20px;
         width: 55px;
         height: 55px;
         font-size: 1.3rem;

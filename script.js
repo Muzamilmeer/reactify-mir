@@ -1088,6 +1088,7 @@ function showPasswordLogin() {
 // Live Chat System
 let chatOpen = false;
 let chatMessages = [];
+let violationCount = 0;
 let chatResponses = {
     'track my order': 'I can help you track your order! Please provide your order number or contact me on WhatsApp at +91 9103594759.',
     'need help with payment': 'For payment issues, you can contact me directly on WhatsApp at +91 9103594759. I\'ll resolve it quickly!',
@@ -1213,6 +1214,64 @@ function addMessage(text, sender) {
 
 function getChatResponse(message) {
     const lowerMessage = message.toLowerCase();
+    
+    // Check for inappropriate/violent words
+    const inappropriateWords = [
+        'stupid', 'idiot', 'fool', 'damn', 'hell', 'shit', 'fuck', 'bitch', 'bastard',
+        'asshole', 'moron', 'loser', 'hate', 'kill', 'die', 'murder', 'violence',
+        'fight', 'beat', 'punch', 'slap', 'kick', 'hurt', 'pain', 'blood',
+        'ugly', 'fat', 'disgusting', 'pathetic', 'worthless', 'useless',
+        'pagal', 'bewakoof', 'gadha', 'ullu', 'kamina', 'badtameez', 'ghatiya',
+        'kutta', 'saala', 'harami', 'randi', 'madarchod', 'bhenchod', 'chutiya',
+        'gaandu', 'bhosdike', 'laude', 'teri maa', 'bhosdi', 'randi', 'kutiya'
+    ];
+    
+    // Check if message contains inappropriate content
+    const containsInappropriate = inappropriateWords.some(word => 
+        lowerMessage.includes(word)
+    );
+    
+    if (containsInappropriate) {
+        violationCount++;
+        
+        // Play warning sound
+        playSound('wishlistRemove');
+        
+        if (violationCount === 1) {
+            showNotification('⚠️ Please use respectful language', 'error');
+            return "⚠️ Please maintain respectful language. I'm here to help you professionally. Let's keep our conversation positive and productive.";
+        } else if (violationCount === 2) {
+            showNotification('🚫 Second warning - Be respectful', 'error');
+            return "🚫 This is your second warning. I understand you might be frustrated, but please use appropriate language. I'm here to assist you with your shopping needs respectfully.";
+        } else if (violationCount >= 3) {
+            showNotification('🛑 Chat suspended due to inappropriate language', 'error');
+            
+            // Disable chat input temporarily
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            if (chatInput && sendBtn) {
+                chatInput.disabled = true;
+                sendBtn.disabled = true;
+                chatInput.placeholder = "Chat suspended for 30 seconds...";
+                
+                setTimeout(() => {
+                    chatInput.disabled = false;
+                    sendBtn.disabled = false;
+                    chatInput.placeholder = "Type your message...";
+                    violationCount = 0; // Reset after timeout
+                }, 30000); // 30 seconds suspension
+            }
+            
+            return "🛑 CHAT SUSPENDED: Due to repeated inappropriate language, this chat is temporarily suspended for 30 seconds. Please use respectful communication. Contact WhatsApp +91 9103594759 for immediate assistance.";
+        }
+        
+        const warningResponses = [
+            "⚠️ Kindly use polite language. As a professional customer service, I request you to communicate respectfully. How can I help you properly?",
+            "⚠️ Let's maintain a professional conversation. I'm Muzamil, and I'm here to help you with excellent customer service. Please communicate respectfully."
+        ];
+        
+        return warningResponses[Math.floor(Math.random() * warningResponses.length)];
+    }
     
     // Check for specific responses
     for (let key in chatResponses) {
