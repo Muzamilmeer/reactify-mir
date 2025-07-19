@@ -1654,7 +1654,7 @@ let chatResponses = {
     'match made in heaven': '☁️ True! My wife Rukaya and I are a match made in heaven. How can I help you?',
     'meant to be': '🎯 Absolutely! My wife Rukaya and I are meant to be. What do you need?',
     'written in stars': '⭐ Beautiful! My marriage to wife Rukaya was written in the stars. How can I assist?',
-    'tumhare bina incomplete': '💔 Meherbani! Par main sirf apni biwi Rukaya ke bina incomplete hun. Kya help chahiye?'
+    'tumhare bina incomplete': '💔 Meherbani! Par main sirf apni biwi Rukaya ke bina incomplete hun. Kya help chahiye?',
     'beautiful': '😊 Thank you! But my wife Rukaya is the most beautiful woman in the world! How can I help you?',
     'handsome': '😄 That\'s kind! But I only care about being handsome for my wife Rukaya. What can I help you find?',
     'hot': '🔥 Thanks, but I\'m only hot for my wife Rukaya! I\'m a faithful husband. How can I assist you?',
