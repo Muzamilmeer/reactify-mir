@@ -870,21 +870,41 @@ document.addEventListener('keydown', (e) => {
 
 // Order Tracking Functions
 function trackOrder() {
-    const modalOverlay = document.getElementById('order-modal-overlay');
-    modalOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    
-    // Play sound
-    playSound('themeChange');
-    
-    // Show notification
-    showNotification('📦 Order tracking opened! Contact us for real-time updates.', 'info');
+    try {
+        const modalOverlay = document.getElementById('order-modal-overlay');
+        if (!modalOverlay) {
+            console.error('Order modal overlay not found');
+            showNotification('❌ Error opening order tracking', 'error');
+            return;
+        }
+        
+        modalOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Play sound
+        playSound('themeChange');
+        
+        // Show notification
+        showNotification('📦 Order tracking opened! Contact us for real-time updates.', 'info');
+        
+        console.log('Order tracking modal opened successfully');
+    } catch (error) {
+        console.error('Error in trackOrder function:', error);
+        showNotification('❌ Error opening order tracking', 'error');
+    }
 }
 
 function closeOrderModal() {
-    const modalOverlay = document.getElementById('order-modal-overlay');
-    modalOverlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
+    try {
+        const modalOverlay = document.getElementById('order-modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            console.log('Order tracking modal closed successfully');
+        }
+    } catch (error) {
+        console.error('Error in closeOrderModal function:', error);
+    }
 }
 
 function proceedToCheckout() {
@@ -929,5 +949,31 @@ document.addEventListener('click', (e) => {
     const orderModalOverlay = document.getElementById('order-modal-overlay');
     if (orderModalOverlay && e.target === orderModalOverlay) {
         closeOrderModal();
+    }
+});
+
+// Make functions globally accessible
+window.trackOrder = trackOrder;
+window.closeOrderModal = closeOrderModal;
+window.proceedToCheckout = proceedToCheckout;
+
+// Debug function
+function testTrackOrder() {
+    console.log('Testing trackOrder function...');
+    trackOrder();
+}
+window.testTrackOrder = testTrackOrder;
+
+// Add event listener for track order button when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const trackBtn = document.querySelector('.track-order-btn');
+    if (trackBtn) {
+        trackBtn.addEventListener('click', function() {
+            console.log('Track order button clicked');
+            trackOrder();
+        });
+        console.log('Track order button event listener added');
+    } else {
+        console.error('Track order button not found');
     }
 });
