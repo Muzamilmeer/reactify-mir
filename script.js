@@ -1109,10 +1109,14 @@ function openChat() {
     chatFloatBtn.style.display = 'none';
     chatOpen = true;
     
-    // Clear notification
+    // Clear notifications
     const notification = document.getElementById('chat-notification');
+    const headerNotification = document.getElementById('chat-notification-header');
     if (notification) {
         notification.style.display = 'none';
+    }
+    if (headerNotification) {
+        headerNotification.style.display = 'none';
     }
     
     playSound('themeChange');
@@ -1293,11 +1297,15 @@ function getChatResponse(message) {
 
 // Initialize chat on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Show chat notification after 5 seconds
+    // Show chat notifications after 5 seconds
     setTimeout(() => {
         const notification = document.getElementById('chat-notification');
+        const headerNotification = document.getElementById('chat-notification-header');
         if (notification && !chatOpen) {
             notification.style.display = 'flex';
+        }
+        if (headerNotification && !chatOpen) {
+            headerNotification.style.display = 'flex';
         }
     }, 5000);
     
