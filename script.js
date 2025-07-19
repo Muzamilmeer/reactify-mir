@@ -1315,28 +1315,37 @@ function lockApp() {
 
 function unlockApp() {
     console.log('🔓 Unlocking app...');
+    console.log('Current state - isAppLocked:', isAppLocked, 'isAuthenticated:', isAuthenticated);
     
     isAppLocked = false;
     isAuthenticated = true;
+    console.log('Updated state - isAppLocked:', isAppLocked, 'isAuthenticated:', isAuthenticated);
     
     // Remove blur effect
     const mainApp = document.getElementById('main-app');
+    console.log('Main app element found:', !!mainApp);
     if (mainApp) {
+        console.log('Current main app filter:', mainApp.style.filter);
         mainApp.style.filter = 'none';
         mainApp.style.pointerEvents = 'auto';
-        console.log('✅ Blur removed from main app');
+        console.log('✅ Blur removed from main app - new filter:', mainApp.style.filter);
+    } else {
+        console.error('❌ Main app element not found!');
     }
     
     // Hide unlock overlay
+    console.log('Calling hideUnlockOverlay...');
     hideUnlockOverlay();
-    console.log('✅ Unlock overlay hidden');
+    console.log('✅ hideUnlockOverlay called');
     
     // Update lock button
+    console.log('Updating lock button...');
     updateLockButton();
     console.log('✅ Lock button updated');
     
     // Show success notification
     try {
+        console.log('Showing success notification...');
         showNotification('🔓 App unlocked! Will auto-lock after 30 seconds of inactivity.', 'success');
         console.log('✅ Success notification shown');
     } catch (error) {
@@ -1346,7 +1355,9 @@ function unlockApp() {
     }
     
     // Start auto-lock timer
+    console.log('Starting auto-lock timer...');
     startAutoLockTimer();
+    console.log('✅ Auto-lock timer started');
     
     console.log('✅ App unlock completed');
 }
@@ -1435,10 +1446,16 @@ function showUnlockOverlay() {
 }
 
 function hideUnlockOverlay() {
+    console.log('🔍 Looking for unlock overlay...');
     const overlay = document.getElementById('unlock-overlay');
+    console.log('Unlock overlay found:', !!overlay);
+    
     if (overlay) {
+        console.log('Current overlay display:', overlay.style.display);
         overlay.style.display = 'none';
-        console.log('✅ Unlock overlay hidden');
+        console.log('✅ Unlock overlay hidden - new display:', overlay.style.display);
+    } else {
+        console.error('❌ Unlock overlay not found!');
     }
 }
 
@@ -2105,6 +2122,25 @@ window.showBiometricSetupModal = showBiometricSetupModal;
 window.startAutoLockTimer = startAutoLockTimer;
 window.stopAutoLockTimer = stopAutoLockTimer;
 window.resetAutoLockTimer = resetAutoLockTimer;
+
+// Test function for debugging
+function testUnlock() {
+    console.log('🧪 Test unlock button clicked');
+    console.log('Current app state - Locked:', isAppLocked, 'Setup:', biometricSetupCompleted);
+    
+    if (isAppLocked) {
+        console.log('App is locked, calling unlockApp()');
+        unlockApp();
+    } else {
+        console.log('App is not locked, forcing lock first');
+        if (biometricSetupCompleted) {
+            lockApp();
+        } else {
+            alert('Complete biometric setup first!');
+        }
+    }
+}
+window.testUnlock = testUnlock;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
