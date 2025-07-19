@@ -277,23 +277,29 @@ const playSound = (type) => {
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', function() {
-    products = [...sampleProducts];
-    showSplashScreen();
-    initializeEventListeners();
-    
-    // Check biometric support after DOM is ready
-    setTimeout(() => {
-        checkBiometricSupport().then(supported => {
-            if (supported) {
-                showNotification('🔐 Real biometric authentication available!', 'success');
-            } else {
-                showNotification('❌ Biometric authentication not supported on this device', 'warning');
-            }
-        }).catch(error => {
-            // Silently handle biometric check errors
-            console.log('Biometric check error:', error);
-        });
-    }, 2000); // Wait 2 seconds after app loads
+    try {
+        console.log('🚀 Initializing ShopEasy...');
+        products = [...sampleProducts];
+        showSplashScreen();
+        initializeEventListeners();
+        console.log('✅ ShopEasy initialized successfully!');
+        
+        // Check biometric support after DOM is ready (optional)
+        setTimeout(() => {
+            checkBiometricSupport().then(supported => {
+                if (supported) {
+                    console.log('🔐 Biometric authentication available');
+                } else {
+                    console.log('❌ Biometric authentication not supported');
+                }
+            }).catch(error => {
+                // Silently handle biometric check errors
+                console.log('Biometric check error:', error);
+            });
+        }, 3000); // Wait 3 seconds after app loads
+    } catch (error) {
+        console.error('❌ Error initializing app:', error);
+    }
 });
 
 // Splash Screen
