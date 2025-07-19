@@ -1005,21 +1005,74 @@ let autoLockDelay = 30000; // Auto-lock after 30 seconds of inactivity
 // Check real biometric support on page load
 async function checkBiometricSupport() {
     try {
+        console.log('🔍 Checking biometric support...');
+        console.log('Current URL:', window.location.href);
+        console.log('Protocol:', window.location.protocol);
+        console.log('Hostname:', window.location.hostname);
+        console.log('Is secure context:', window.isSecureContext);
+        
+        // Check if WebAuthn is available
         if (!window.PublicKeyCredential) {
+            console.log('❌ WebAuthn not supported in this browser');
             biometricSupported = false;
+            showBiometricNotSupported();
+            return false;
+        }
+        
+        // Check if we're in a secure context (HTTPS or localhost)
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' ||
+                          window.location.hostname === '0.0.0.0';
+        
+        if (!window.isSecureContext && !isLocalhost) {
+            console.log('❌ Not in secure context (HTTPS required for WebAuthn)');
+            biometricSupported = false;
+            showSecureContextRequired();
             return false;
         }
         
         // Check if platform authenticator is available
         const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         biometricSupported = available;
+        
+        if (available) {
+            console.log('✅ Platform biometric authenticator available');
+        } else {
+            console.log('❌ Platform biometric authenticator not available');
+            showPasswordOnlyMode();
+        }
+        
         return available;
     } catch (error) {
-        // Handle any errors gracefully
-        console.log('Biometric support check failed:', error);
+        console.error('❌ Error checking biometric support:', error);
         biometricSupported = false;
+        showPasswordOnlyMode();
         return false;
     }
+}
+
+// Show biometric not supported message
+function showBiometricNotSupported() {
+    console.log('📱 Device does not support biometric authentication');
+    setTimeout(() => {
+        showNotification('📱 Biometric not supported. Password lock available instead.', 'info');
+    }, 2000);
+}
+
+// Show secure context required message  
+function showSecureContextRequired() {
+    console.log('🔒 HTTPS required for biometric authentication');
+    setTimeout(() => {
+        showNotification('🔒 HTTPS required for biometric. Using password mode instead.', 'warning');
+    }, 2000);
+}
+
+// Show password only mode
+function showPasswordOnlyMode() {
+    console.log('🔑 Enabling password-only authentication mode');
+    setTimeout(() => {
+        showNotification('🔑 Password authentication available. Setup from security modal.', 'info');
+    }, 2000);
 }
 
 // Biometric support will be checked after DOM loads
@@ -1084,7 +1137,13 @@ async function setupFingerprint() {
     const statusText = statusElement.querySelector('.status-text');
     
     if (!biometricSupported) {
-        showNotification('❌ Biometric authentication not supported', 'error');
+        console.log('❌ Fingerprint not supported, showing password setup instead');
+        showNotification('❌ Fingerprint not supported on this device. Try password setup instead.', 'error');
+        
+        // Auto-redirect to password setup after 2 seconds
+        setTimeout(() => {
+            setupPasswordLock();
+        }, 2000);
         return;
     }
     
@@ -1188,7 +1247,13 @@ async function setupFaceRecognition() {
     const statusText = statusElement.querySelector('.status-text');
     
     if (!biometricSupported) {
-        showNotification('❌ Biometric authentication not supported', 'error');
+        console.log('❌ Face recognition not supported, showing password setup instead');
+        showNotification('❌ Face recognition not supported on this device. Try password setup instead.', 'error');
+        
+        // Auto-redirect to password setup after 2 seconds
+        setTimeout(() => {
+            setupPasswordLock();
+        }, 2000);
         return;
     }
     
