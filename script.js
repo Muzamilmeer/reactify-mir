@@ -873,7 +873,7 @@ function trackOrder() {
     try {
         const modalOverlay = document.getElementById('order-modal-overlay');
         if (!modalOverlay) {
-            console.error('Order modal overlay not found');
+            // Order modal overlay not found
             showNotification('❌ Error opening order tracking', 'error');
             return;
         }
@@ -887,9 +887,9 @@ function trackOrder() {
         // Show notification
         showNotification('📦 Order tracking opened! Contact us for real-time updates.', 'info');
         
-        console.log('Order tracking modal opened successfully');
+        // Order tracking modal opened successfully
     } catch (error) {
-        console.error('Error in trackOrder function:', error);
+        // Error in trackOrder function
         showNotification('❌ Error opening order tracking', 'error');
     }
 }
@@ -900,10 +900,10 @@ function closeOrderModal() {
         if (modalOverlay) {
             modalOverlay.classList.remove('active');
             document.body.style.overflow = 'auto';
-            console.log('Order tracking modal closed successfully');
+            // Order tracking modal closed successfully
         }
     } catch (error) {
-        console.error('Error in closeOrderModal function:', error);
+        // Error in closeOrderModal function
     }
 }
 
@@ -1115,18 +1115,18 @@ let chatResponses = {
     'mohabbat': '💕 Mohabbat to customers se hai! Kya chahiye aapko?',
     'miss you': '🥺 Aww, I miss talking to lovely customers too! I\'m always here when you need me.',
     'like you': '😊 I like you too! You seem like such a wonderful person. Let me help you find something special.',
-    'love you': '💕 Thank you for the love! But I\'m already committed to my beautiful wife Rukhaya. Let me help you find something special for your loved one!',
-    'i love you': '💖 I appreciate the love! But my heart belongs to my wife Rukhaya. How about I help you find something amazing for someone you love?',
-    'marry me': '😄 Haha, I\'m flattered! But I\'m already happily married to my beautiful wife Rukhaya. Let me help you with shopping instead!',
-    'married': '💍 Yes, I\'m happily married to my lovely wife Rukhaya! She\'s my everything. How can I help you today?',
-    'wife': '👰 My wife Rukhaya is the most beautiful and amazing woman in the world! I\'m blessed to have her. What can I help you find?',
-    'girlfriend': '😅 I don\'t have a girlfriend - I have an amazing wife named Rukhaya! Can I help you find gifts for your girlfriend?',
-    'boyfriend': '😊 I\'m a happily married man to my wife Rukhaya! Need help finding something for your boyfriend?',
-    'single': '💍 No, I\'m not single! I\'m happily married to my beautiful wife Rukhaya. How can I assist you with shopping?',
-    'relationship': '💕 I\'m in a wonderful relationship - married to my lovely wife Rukhaya! What can I help you find today?',
-    'rukhaya': '😍 Rukhaya is my beautiful wife and the love of my life! I\'m so lucky to have her. How can I help you?',
-    'shaadi': '💒 Haan bhai, meri shaadi ho gayi hai Rukhaya se! Bahut khush hun. Aapki kya help kar sakta hun?',
-    'biwi': '👰 Meri biwi Rukhaya hai, bahut pyaari hai! Main bahut khush hun. Aapko kya chahiye?'
+    'love you': '💕 Thank you for the love! But I\'m already committed to my beautiful wife Rukaya. Let me help you find something special for your loved one!',
+    'i love you': '💖 I appreciate the love! But my heart belongs to my wife Rukaya. How about I help you find something amazing for someone you love?',
+    'marry me': '😄 Haha, I\'m flattered! But I\'m already happily married to my beautiful wife Rukaya. Let me help you with shopping instead!',
+    'married': '💍 Yes, I\'m happily married to my lovely wife Rukaya! She\'s my everything. How can I help you today?',
+    'wife': '👰 My wife Rukaya is the most beautiful and amazing woman in the world! I\'m blessed to have her. What can I help you find?',
+    'girlfriend': '😅 I don\'t have a girlfriend - I have an amazing wife named Rukaya! Can I help you find gifts for your girlfriend?',
+    'boyfriend': '😊 I\'m a happily married man to my wife Rukaya! Need help finding something for your boyfriend?',
+    'single': '💍 No, I\'m not single! I\'m happily married to my beautiful wife Rukaya. How can I assist you with shopping?',
+    'relationship': '💕 I\'m in a wonderful relationship - married to my lovely wife Rukaya! What can I help you find today?',
+    'rukaya': '😍 Rukaya is my beautiful wife and the love of my life! I\'m so lucky to have her. How can I help you?',
+    'shaadi': '💒 Haan bhai, meri shaadi ho gayi hai Rukaya se! Bahut khush hun. Aapki kya help kar sakta hun?',
+    'biwi': '👰 Meri biwi Rukaya hai, bahut pyaari hai! Main bahut khush hun. Aapko kya chahiye?'
 };
 
 function openChat() {
@@ -1366,9 +1366,8 @@ window.sendQuickReply = sendQuickReply;
 
 
 
-// Debug function
+// Debug function for testing
 function testTrackOrder() {
-    console.log('Testing trackOrder function...');
     trackOrder();
 }
 window.testTrackOrder = testTrackOrder;
@@ -1378,11 +1377,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const trackBtn = document.querySelector('.track-order-btn');
     if (trackBtn) {
         trackBtn.addEventListener('click', function() {
-            console.log('Track order button clicked');
             trackOrder();
         });
-        console.log('Track order button event listener added');
     } else {
-        console.error('Track order button not found');
+        // Track order button not found
     }
 });
