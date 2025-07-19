@@ -105,6 +105,13 @@ body {
     margin-bottom: 30px;
 }
 
+.logo-icon {
+    font-size: 4rem;
+    color: #fff;
+    margin-bottom: 20px;
+    animation: bounce 2s infinite;
+}
+
 .app-title {
     font-size: 3rem;
     font-weight: 700;
