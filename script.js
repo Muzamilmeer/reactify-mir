@@ -1349,6 +1349,8 @@ async function setupFaceRecognition() {
     }
 }
 
+
+
 // Verify Biometric Authentication - Check against stored credential
 async function verifyBiometricAuthentication() {
     console.log('🔐 Starting biometric verification...');
@@ -1432,26 +1434,7 @@ async function lockApp() {
         return;
     }
     
-    console.log('🔒 Attempting to lock app - verifying authentication first...');
-    
-    let verified = false;
-    
-    if (biometricType === 'password') {
-        // For password lock, just confirm with user
-        const confirmLock = confirm('Lock the app now?');
-        verified = confirmLock;
-    } else {
-        // For biometric lock, verify first
-        verified = await verifyBiometricAuthentication();
-    }
-    
-    if (!verified) {
-        console.log('❌ Cannot lock: Authentication verification failed');
-        showNotification('❌ Authentication required to lock the app.', 'error');
-        return;
-    }
-    
-    console.log('🔒 Biometric verified, locking app...');
+    console.log('🔒 Locking app directly - security is in unlock, not lock...');
     
     isAppLocked = true;
     isAuthenticated = false; // Reset authentication after lock
