@@ -175,6 +175,17 @@
                                 <span class="status-text">Click to setup face recognition</span>
                             </div>
                         </div>
+                        
+                        <div class="biometric-method" onclick="setupPasswordLock()">
+                            <div class="biometric-icon">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <h3>Setup Password Lock</h3>
+                            <p>Use password if biometric is not available</p>
+                            <div class="biometric-status" id="password-setup-status">
+                                <span class="status-text">Click to setup password</span>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="biometric-fallback">
@@ -476,11 +487,6 @@
                 <button class="unlock-btn primary" id="biometric-unlock-btn" onclick="attemptBiometricUnlock()">
                     <i class="fas fa-fingerprint" id="unlock-btn-icon"></i>
                     <span id="unlock-btn-text">Unlock with Biometric</span>
-                </button>
-                
-                <button class="unlock-btn secondary" onclick="emergencyUnlock()">
-                    <i class="fas fa-key"></i>
-                    Emergency Unlock
                 </button>
             </div>
             

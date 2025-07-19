@@ -1331,6 +1331,9 @@ async function verifyBiometricAuthentication() {
         
         if (error.name === 'NotAllowedError') {
             showNotification('❌ Biometric verification cancelled', 'error');
+        } else if (error.name === 'NotSupportedError') {
+            console.log('📱 Biometric not supported, showing alternative unlock');
+            showAlternativeUnlock();
         } else {
             showNotification('❌ Biometric verification failed. Please try again.', 'error');
         }
@@ -1364,14 +1367,22 @@ async function lockApp() {
         return;
     }
     
-    console.log('🔒 Attempting to lock app - verifying biometric first...');
+    console.log('🔒 Attempting to lock app - verifying authentication first...');
     
-    // First verify biometric authentication before locking
-    const verified = await verifyBiometricAuthentication();
+    let verified = false;
+    
+    if (biometricType === 'password') {
+        // For password lock, just confirm with user
+        const confirmLock = confirm('Lock the app now?');
+        verified = confirmLock;
+    } else {
+        // For biometric lock, verify first
+        verified = await verifyBiometricAuthentication();
+    }
     
     if (!verified) {
-        console.log('❌ Cannot lock: Biometric verification failed');
-        showNotification('❌ Biometric verification required to lock the app.', 'error');
+        console.log('❌ Cannot lock: Authentication verification failed');
+        showNotification('❌ Authentication required to lock the app.', 'error');
         return;
     }
     
@@ -2234,10 +2245,19 @@ async function attemptBiometricUnlock() {
     btnText.textContent = 'Authenticating...';
     
     try {
-        const verified = await verifyBiometricAuthentication();
+        let verified = false;
+        
+        if (biometricType === 'password') {
+            // For password unlock, show password input
+            showPasswordUnlock();
+            return; // Exit here, password flow will handle the rest
+        } else {
+            // For biometric unlock
+            verified = await verifyBiometricAuthentication();
+        }
         
         if (verified) {
-            console.log('✅ Biometric unlock successful');
+            console.log('✅ Authentication unlock successful');
             
             // Show success
             unlockStatus.className = 'unlock-status success';
@@ -2250,7 +2270,7 @@ async function attemptBiometricUnlock() {
             }, 1000);
             
         } else {
-            throw new Error('Biometric verification failed');
+            throw new Error('Authentication verification failed');
         }
         
     } catch (error) {
@@ -2271,15 +2291,150 @@ async function attemptBiometricUnlock() {
     }
 }
 
-// Emergency unlock function
-function emergencyUnlock() {
-    console.log('🚨 Emergency unlock triggered');
+// Alternative unlock for devices without biometric support
+function showAlternativeUnlock() {
+    console.log('📱 Showing alternative unlock options...');
     
-    const confirmed = confirm('Emergency unlock will bypass biometric security. Are you sure?');
+    const overlay = document.getElementById('unlock-overlay');
+    const unlockContent = overlay?.querySelector('.unlock-content');
+    
+    if (unlockContent) {
+        unlockContent.innerHTML = `
+            <div class="unlock-icon">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h2>Biometric Not Available</h2>
+            <p>Your device doesn't support biometric authentication</p>
+            
+            <div class="unlock-buttons">
+                <button class="unlock-btn primary" onclick="showPasswordUnlock()">
+                    <i class="fas fa-lock"></i>
+                    Use Password Instead
+                </button>
+                <button class="unlock-btn secondary" onclick="disableLockFeature()">
+                    <i class="fas fa-times"></i>
+                    Disable App Lock
+                </button>
+            </div>
+            
+            <div class="unlock-status">
+                <span class="status-text">Choose an alternative method</span>
+            </div>
+        `;
+    }
+}
+
+// Show password unlock option
+function showPasswordUnlock() {
+    const overlay = document.getElementById('unlock-overlay');
+    const unlockContent = overlay?.querySelector('.unlock-content');
+    
+    if (unlockContent) {
+        unlockContent.innerHTML = `
+            <div class="unlock-icon">
+                <i class="fas fa-key"></i>
+            </div>
+            <h2>Enter Password</h2>
+            <p>Enter your app password to unlock</p>
+            
+            <div class="password-input-container">
+                <input type="password" id="unlock-password" placeholder="Enter password" 
+                       style="width: 100%; padding: 15px; border: none; border-radius: 10px; 
+                              margin: 20px 0; font-size: 16px; text-align: center;">
+            </div>
+            
+            <div class="unlock-buttons">
+                <button class="unlock-btn primary" onclick="verifyPassword()">
+                    <i class="fas fa-unlock"></i>
+                    Unlock
+                </button>
+                <button class="unlock-btn secondary" onclick="showAlternativeUnlock()">
+                    <i class="fas fa-arrow-left"></i>
+                    Back
+                </button>
+            </div>
+            
+            <div class="unlock-status" id="password-status">
+                <span class="status-text">Enter your password</span>
+            </div>
+        `;
+        
+        // Focus on password input
+        setTimeout(() => {
+            const passwordInput = document.getElementById('unlock-password');
+            if (passwordInput) {
+                passwordInput.focus();
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        verifyPassword();
+                    }
+                });
+            }
+        }, 100);
+    }
+}
+
+// Verify password unlock
+function verifyPassword() {
+    const passwordInput = document.getElementById('unlock-password');
+    const passwordStatus = document.getElementById('password-status');
+    const statusText = passwordStatus?.querySelector('.status-text');
+    
+    if (!passwordInput || !passwordStatus) return;
+    
+    const enteredPassword = passwordInput.value.trim();
+    const storedPassword = localStorage.getItem('appPassword') || 'shopeasy123'; // Default password
+    
+    if (statusText) statusText.textContent = 'Verifying...';
+    passwordStatus.className = 'unlock-status authenticating';
+    
+    setTimeout(() => {
+        if (enteredPassword === storedPassword) {
+            // Success
+            passwordStatus.className = 'unlock-status success';
+            if (statusText) statusText.textContent = '✓ Password correct!';
+            
+            setTimeout(() => {
+                unlockApp();
+            }, 1000);
+            
+        } else {
+            // Error
+            passwordStatus.className = 'unlock-status error';
+            if (statusText) statusText.textContent = '❌ Incorrect password';
+            passwordInput.value = '';
+            passwordInput.focus();
+            
+            // Reset after delay
+            setTimeout(() => {
+                passwordStatus.className = 'unlock-status';
+                if (statusText) statusText.textContent = 'Enter your password';
+            }, 3000);
+        }
+    }, 1000);
+}
+
+// Disable lock feature for devices without biometric
+function disableLockFeature() {
+    const confirmed = confirm('This will disable the app lock feature completely. Are you sure?');
     if (confirmed) {
-        console.log('🚨 Emergency unlock confirmed');
-        unlockApp();
-        showNotification('🚨 Emergency unlock used - Please reconfigure biometric security', 'warning');
+        // Clear biometric data
+        localStorage.removeItem('biometricCredential');
+        localStorage.removeItem('biometricType');
+        localStorage.removeItem('biometricSetupCompleted');
+        
+        // Reset variables
+        biometricSetupCompleted = false;
+        storedBiometricCredential = null;
+        biometricType = null;
+        isAppLocked = false;
+        isAuthenticated = true;
+        
+        // Hide overlay and update UI
+        hideUnlockOverlay();
+        updateLockButton();
+        
+        showNotification('🔓 App lock feature disabled. You can re-enable it from settings.', 'info');
     }
 }
 
@@ -2297,15 +2452,133 @@ function updateUnlockOverlay() {
         unlockMessage.textContent = 'Use your registered face to unlock';
         unlockBtnIcon.className = 'fas fa-user-check';
         unlockBtnText.textContent = 'Unlock with Face';
+    } else if (biometricType === 'password') {
+        unlockMessage.textContent = 'Enter your password to unlock';
+        unlockBtnIcon.className = 'fas fa-key';
+        unlockBtnText.textContent = 'Unlock with Password';
     } else {
-        unlockMessage.textContent = 'Use your registered biometric to unlock';
+        unlockMessage.textContent = 'Use your registered authentication to unlock';
         unlockBtnIcon.className = 'fas fa-fingerprint';
-        unlockBtnText.textContent = 'Unlock with Biometric';
+        unlockBtnText.textContent = 'Unlock';
     }
 }
 
+// Setup password lock for devices without biometric
+function setupPasswordLock() {
+    console.log('🔑 Starting password lock setup...');
+    
+    const statusElement = document.getElementById('password-setup-status');
+    const statusText = statusElement?.querySelector('.status-text');
+    
+    if (statusText) statusText.textContent = 'Setting up password...';
+    if (statusElement) statusElement.className = 'biometric-status scanning';
+    
+    // Create password setup modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
+        z-index: 10001;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; text-align: center;">
+            <h3>Setup App Password</h3>
+            <p>Create a secure password to lock/unlock your app</p>
+            
+            <input type="password" id="new-password" placeholder="Enter new password" 
+                   style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; margin: 10px 0; font-size: 16px;">
+            
+            <input type="password" id="confirm-password" placeholder="Confirm password" 
+                   style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; margin: 10px 0; font-size: 16px;">
+            
+            <div style="margin: 20px 0;">
+                <button onclick="savePassword()" style="background: #667eea; color: white; border: none; padding: 12px 25px; border-radius: 8px; margin: 5px; cursor: pointer;">
+                    Save Password
+                </button>
+                <button onclick="closePasswordSetup()" style="background: #6c757d; color: white; border: none; padding: 12px 25px; border-radius: 8px; margin: 5px; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
+            
+            <div id="password-setup-message" style="margin-top: 15px; font-size: 14px;"></div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Focus on first input
+    setTimeout(() => {
+        const newPasswordInput = document.getElementById('new-password');
+        if (newPasswordInput) newPasswordInput.focus();
+    }, 100);
+    
+    // Store modal reference
+    window.passwordSetupModal = modal;
+}
+
+// Save password function
+function savePassword() {
+    const newPassword = document.getElementById('new-password')?.value;
+    const confirmPassword = document.getElementById('confirm-password')?.value;
+    const messageDiv = document.getElementById('password-setup-message');
+    
+    if (!newPassword || !confirmPassword) {
+        if (messageDiv) messageDiv.innerHTML = '<span style="color: #dc3545;">Please fill in both fields</span>';
+        return;
+    }
+    
+    if (newPassword.length < 4) {
+        if (messageDiv) messageDiv.innerHTML = '<span style="color: #dc3545;">Password must be at least 4 characters</span>';
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        if (messageDiv) messageDiv.innerHTML = '<span style="color: #dc3545;">Passwords do not match</span>';
+        return;
+    }
+    
+    // Save password
+    localStorage.setItem('appPassword', newPassword);
+    localStorage.setItem('lockMethod', 'password');
+    localStorage.setItem('biometricSetupCompleted', 'true');
+    
+    // Update variables
+    biometricSetupCompleted = true;
+    biometricType = 'password';
+    isAuthenticated = true;
+    
+    if (messageDiv) messageDiv.innerHTML = '<span style="color: #28a745;">✓ Password saved successfully!</span>';
+    
+    setTimeout(() => {
+        closePasswordSetup();
+        closeBiometricModal();
+        showNotification('🔑 Password lock setup completed! App lock is now available.', 'success');
+        updateLockButton();
+    }, 1500);
+}
+
+// Close password setup modal
+function closePasswordSetup() {
+    if (window.passwordSetupModal) {
+        document.body.removeChild(window.passwordSetupModal);
+        window.passwordSetupModal = null;
+    }
+    
+    // Reset status
+    const statusElement = document.getElementById('password-setup-status');
+    const statusText = statusElement?.querySelector('.status-text');
+    if (statusElement) statusElement.className = 'biometric-status';
+    if (statusText) statusText.textContent = 'Click to setup password';
+}
+
 window.attemptBiometricUnlock = attemptBiometricUnlock;
-window.emergencyUnlock = emergencyUnlock;
+window.setupPasswordLock = setupPasswordLock;
+window.savePassword = savePassword;
+window.closePasswordSetup = closePasswordSetup;
+window.showPasswordUnlock = showPasswordUnlock;
+window.verifyPassword = verifyPassword;
+window.disableLockFeature = disableLockFeature;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
@@ -2338,24 +2611,34 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         const storedCredential = localStorage.getItem('biometricCredential');
         const storedType = localStorage.getItem('biometricType');
+        const lockMethod = localStorage.getItem('lockMethod');
         const setupCompleted = localStorage.getItem('biometricSetupCompleted');
         
-        if (storedCredential && storedType && setupCompleted === 'true') {
-            storedBiometricCredential = JSON.parse(storedCredential);
-            biometricType = storedType;
-            biometricSetupCompleted = true;
-            isAuthenticated = false; // Always start unauthenticated
-            
-            console.log('✅ Stored biometric data loaded:', {
-                type: biometricType,
-                hasCredential: !!storedBiometricCredential,
-                setupCompleted: biometricSetupCompleted
-            });
+        if (setupCompleted === 'true') {
+            if (lockMethod === 'password' || storedType === 'password') {
+                // Password-based lock
+                biometricType = 'password';
+                biometricSetupCompleted = true;
+                isAuthenticated = false;
+                
+                console.log('✅ Password lock data loaded');
+            } else if (storedCredential && storedType) {
+                // Biometric-based lock
+                storedBiometricCredential = JSON.parse(storedCredential);
+                biometricType = storedType;
+                biometricSetupCompleted = true;
+                isAuthenticated = false;
+                
+                console.log('✅ Biometric lock data loaded:', {
+                    type: biometricType,
+                    hasCredential: !!storedBiometricCredential
+                });
+            }
             
             // Update lock button state
             updateLockButton();
         } else {
-            console.log('ℹ️ No stored biometric data found');
+            console.log('ℹ️ No lock setup found');
         }
     } catch (error) {
         console.error('❌ Error loading stored biometric data:', error);
