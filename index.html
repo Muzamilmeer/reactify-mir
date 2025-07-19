@@ -53,7 +53,7 @@
                             <i class="fas fa-shopping-cart"></i>
                             <span class="cart-count" id="cart-count">0</span>
                         </div>
-                        <div class="user-profile" onclick="window.location.href='about.html'" style="cursor: pointer;">
+                        <div class="user-profile" onclick="openAboutModal()" style="cursor: pointer;">
                             <i class="fas fa-user"></i>
                         </div>
                     </div>
@@ -121,6 +121,108 @@
 
         <!-- Cart Overlay -->
         <div class="cart-overlay" id="cart-overlay"></div>
+
+        <!-- About Us Modal -->
+        <div class="modal-overlay" id="about-modal-overlay">
+            <div class="about-modal" id="about-modal">
+                <div class="modal-header">
+                    <h2><i class="fas fa-user-circle"></i> About Developer</h2>
+                    <button class="modal-close" onclick="closeAboutModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-content">
+                    <div class="developer-profile">
+                        <div class="developer-avatar">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <div class="developer-info">
+                            <h3>Muzamil</h3>
+                            <p class="developer-role">Full-Stack Developer, Designer & Founder</p>
+                            <p class="developer-description">
+                                The visionary behind ShopEasy, Muzamil is a passionate full-stack developer and the complete team behind this amazing platform. He handles everything from beautiful UI/UX design to backend development, ensuring smooth user experiences and robust functionality. With expertise in modern web technologies, server architecture, databases, digital marketing, customer support, and quality assurance - Muzamil brings innovative solutions to every aspect of the business. His dedication to customer satisfaction and meticulous attention to detail keeps ShopEasy running flawlessly. Follow him on YouTube @muzamilmeer for tech content and development tutorials!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="developer-skills">
+                        <h4><i class="fas fa-tools"></i> Skills & Expertise</h4>
+                        <div class="skills-grid">
+                            <span class="skill-tag">JavaScript</span>
+                            <span class="skill-tag">HTML/CSS</span>
+                            <span class="skill-tag">React</span>
+                            <span class="skill-tag">Node.js</span>
+                            <span class="skill-tag">UI/UX Design</span>
+                            <span class="skill-tag">Figma</span>
+                            <span class="skill-tag">Adobe XD</span>
+                            <span class="skill-tag">Python</span>
+                            <span class="skill-tag">Django</span>
+                            <span class="skill-tag">PostgreSQL</span>
+                            <span class="skill-tag">AWS</span>
+                            <span class="skill-tag">Digital Marketing</span>
+                            <span class="skill-tag">Social Media</span>
+                            <span class="skill-tag">Customer Service</span>
+                            <span class="skill-tag">Quality Assurance</span>
+                            <span class="skill-tag">Team Leadership</span>
+                        </div>
+                    </div>
+
+                    <div class="company-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">10K+</div>
+                            <div class="stat-label">Happy Customers</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">50K+</div>
+                            <div class="stat-label">Products Sold</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">99%</div>
+                            <div class="stat-label">Satisfaction Rate</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Customer Support</div>
+                        </div>
+                    </div>
+
+                    <div class="contact-section">
+                        <h4><i class="fas fa-phone"></i> Contact Information</h4>
+                        <div class="contact-item">
+                            <i class="fab fa-whatsapp"></i>
+                            <a href="https://wa.me/919103594759" target="_blank">+91 9103594759</a>
+                        </div>
+                    </div>
+
+                    <div class="social-section">
+                        <h4><i class="fas fa-share-alt"></i> Follow Me</h4>
+                        <div class="social-links-modal">
+                            <a href="https://www.facebook.com/kavinmatnick?mibextid=ZbWKwL" target="_blank" class="social-link-modal facebook">
+                                <i class="fab fa-facebook"></i>
+                                <span>Facebook</span>
+                            </a>
+                            <a href="https://youtube.com/@muzamilmeer?si=rPVNKYWBki2ofCTZ" target="_blank" class="social-link-modal youtube">
+                                <i class="fab fa-youtube"></i>
+                                <span>YouTube</span>
+                            </a>
+                            <a href="https://www.instagram.com/root.access.granted?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" class="social-link-modal instagram">
+                                <i class="fab fa-instagram"></i>
+                                <span>Instagram</span>
+                            </a>
+                            <a href="https://wa.me/919103594759" target="_blank" class="social-link-modal whatsapp">
+                                <i class="fab fa-whatsapp"></i>
+                                <span>WhatsApp</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="mission-section">
+                        <h4><i class="fas fa-bullseye"></i> Mission</h4>
+                        <p>At ShopEasy, our mission is to revolutionize the online shopping experience by providing customers with a seamless, enjoyable, and trustworthy platform. We believe that shopping should be easy, fun, and accessible to everyone, everywhere.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Footer -->
         <footer class="footer">

@@ -825,3 +825,40 @@ function showNotification(message, type = 'info') {
         setTimeout(() => notification.remove(), 300);
     });
 }
+
+// About Modal Functions
+function openAboutModal() {
+    const modalOverlay = document.getElementById('about-modal-overlay');
+    modalOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Play a gentle sound
+    playSound('themeChange');
+    
+    // Show notification
+    showNotification('👨‍💻 Developer profile opened', 'info');
+}
+
+function closeAboutModal() {
+    const modalOverlay = document.getElementById('about-modal-overlay');
+    modalOverlay.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modalOverlay = document.getElementById('about-modal-overlay');
+    if (e.target === modalOverlay) {
+        closeAboutModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modalOverlay = document.getElementById('about-modal-overlay');
+        if (modalOverlay.classList.contains('active')) {
+            closeAboutModal();
+        }
+    }
+});
