@@ -122,11 +122,18 @@
                 <button class="test-btn" onclick="toggleLock()" id="lock-btn">
                     <i class="fas fa-lock"></i> Lock App
                 </button>
+                <button class="test-btn" onclick="testPersistentLock()" style="background: rgba(255, 193, 7, 0.3);">
+                    <i class="fas fa-shield-alt"></i> Test Persistent Lock
+                </button>
+                <button class="test-btn" onclick="simulateRestart()" style="background: rgba(220, 53, 69, 0.3);">
+                    <i class="fas fa-redo"></i> Simulate Restart
+                </button>
             </div>
             <div id="lock-demo" class="lock-demo">
                 <h4>App Content</h4>
                 <p>This content will be blurred when locked</p>
                 <button class="test-btn">Sample Button</button>
+                <div id="persistent-info" style="margin-top: 15px; font-size: 14px; opacity: 0.8;"></div>
             </div>
         </div>
         
@@ -344,6 +351,11 @@
             document.getElementById('lock-demo').classList.remove('locked');
             document.getElementById('lock-btn').innerHTML = '<i class="fas fa-lock"></i> Lock App';
             document.getElementById('auth-status').innerHTML = '<div class="success">🔓 App is unlocked</div>';
+            
+            // Clear persistent lock state
+            localStorage.setItem('testLockState', 'UNLOCKED');
+            localStorage.removeItem('testLockTime');
+            updatePersistentInfo();
         }
         
         // Clear data
@@ -361,12 +373,59 @@
         function loadStoredData() {
             const password = localStorage.getItem('testPassword');
             const hasPass = localStorage.getItem('testHasPassword');
+            const lockState = localStorage.getItem('testLockState');
             
             if (password && hasPass === 'true') {
                 storedPassword = password;
                 hasPassword = true;
                 document.getElementById('auth-status').innerHTML = '<div class="success">✅ Password authentication loaded</div>';
             }
+            
+            // Check persistent lock state
+            if (lockState === 'LOCKED') {
+                isLocked = true;
+                lockApp();
+                document.getElementById('auth-status').innerHTML = '<div class="warning">🔒 App was locked previously - persistent lock active</div>';
+            }
+            
+            updatePersistentInfo();
+        }
+        
+        // Update persistent info display
+        function updatePersistentInfo() {
+            const persistentInfo = document.getElementById('persistent-info');
+            const lockState = localStorage.getItem('testLockState');
+            const lockTime = localStorage.getItem('testLockTime');
+            
+            if (lockState === 'LOCKED' && lockTime) {
+                const lockDate = new Date(parseInt(lockTime));
+                persistentInfo.innerHTML = `🔒 Persistent Lock: Active since ${lockDate.toLocaleString()}`;
+            } else {
+                persistentInfo.innerHTML = '🔓 Persistent Lock: Inactive';
+            }
+        }
+        
+        // Test persistent lock feature
+        function testPersistentLock() {
+            if (!hasPassword) {
+                alert('Please setup password first to test persistent lock');
+                return;
+            }
+            
+            // Lock the app with persistent state
+            lockApp();
+            localStorage.setItem('testLockState', 'LOCKED');
+            localStorage.setItem('testLockTime', Date.now().toString());
+            
+            updatePersistentInfo();
+            
+            alert('App locked with persistent state!\n\nNow try:\n1. Refresh the page\n2. Close and reopen browser\n3. Clear cache (app should still be locked)\n\nOnly correct password will unlock it.');
+        }
+        
+        // Simulate app restart/refresh
+        function simulateRestart() {
+            alert('Simulating app restart...\nPage will reload to test persistent lock state');
+            location.reload();
         }
         
         // Enter key support

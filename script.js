@@ -1484,6 +1484,12 @@ async function lockApp() {
     showUnlockOverlay();
     console.log('✅ Unlock overlay shown');
     
+    // Set persistent lock state
+    localStorage.setItem('appLockState', 'LOCKED');
+    localStorage.setItem('lockTimestamp', Date.now().toString());
+    localStorage.setItem('lockReason', 'USER_LOCKED');
+    
+    console.log('🔒 Persistent lock state saved');
     console.log('✅ App lock completed');
 }
 
@@ -1527,6 +1533,17 @@ function unlockApp() {
         // Alternative notification
         alert('🔓 App unlocked successfully!');
     }
+    
+    // Clear persistent lock state
+    localStorage.setItem('appLockState', 'UNLOCKED');
+    localStorage.setItem('unlockTimestamp', Date.now().toString());
+    localStorage.removeItem('lockReason');
+    localStorage.removeItem('unlockAttempts'); // Reset attempt counter on successful unlock
+    
+    console.log('🔓 Persistent lock state cleared');
+    
+    // Restore normal page title
+    document.title = 'ShopEasy - Premium Shopping Experience';
     
     // Start auto-lock timer
     console.log('Starting auto-lock timer...');
@@ -2637,6 +2654,153 @@ function closePasswordSetup() {
     if (statusText) statusText.textContent = 'Click to setup password';
 }
 
+// Force persistent lock - applies lock state immediately on page load
+function forcePersistentLock() {
+    console.log('🔒 Forcing persistent lock state...');
+    
+    // Stop any auto-lock timers
+    stopAutoLockTimer();
+    
+    // Apply visual lock immediately
+    const mainApp = document.getElementById('main-app');
+    if (mainApp) {
+        mainApp.style.filter = 'blur(5px)';
+        mainApp.style.pointerEvents = 'none';
+        console.log('✅ Blur applied to main app');
+    }
+    
+    // Show unlock overlay immediately
+    showUnlockOverlay();
+    
+    // Update button state
+    updateLockButton();
+    
+    // Show persistent lock notification
+    const lockTimestamp = localStorage.getItem('lockTimestamp');
+    const lockTime = lockTimestamp ? new Date(parseInt(lockTimestamp)).toLocaleString() : 'Unknown';
+    
+    showNotification(`🔒 App locked since ${lockTime}. Authentication required to unlock.`, 'warning');
+    
+    // Add persistent lock indicator to page title
+    document.title = '🔒 ShopEasy - Locked';
+    
+    console.log('🔒 Persistent lock enforced successfully');
+}
+
+// Show corrupted data lock screen
+function showCorruptedDataLockScreen() {
+    console.log('🚨 Showing corrupted data lock screen');
+    
+    const overlay = document.getElementById('unlock-overlay');
+    const unlockContent = overlay?.querySelector('.unlock-content');
+    
+    if (unlockContent) {
+        unlockContent.innerHTML = `
+            <div class="unlock-icon">
+                <i class="fas fa-exclamation-triangle" style="color: #ff9800;"></i>
+            </div>
+            <h2>App Security Issue</h2>
+            <p>Authentication data corrupted but app remains locked for security</p>
+            
+            <div class="unlock-buttons">
+                <button class="unlock-btn primary" onclick="resetAppSecurity()">
+                    <i class="fas fa-refresh"></i>
+                    Reset Security
+                </button>
+                <button class="unlock-btn secondary" onclick="contactSupport()">
+                    <i class="fas fa-life-ring"></i>
+                    Get Help
+                </button>
+            </div>
+            
+            <div class="unlock-status">
+                <span class="status-text">Security reset required</span>
+            </div>
+        `;
+    }
+    
+    if (overlay) {
+        overlay.style.display = 'flex';
+    }
+    
+    // Apply blur to main content
+    const mainApp = document.getElementById('main-app');
+    if (mainApp) {
+        mainApp.style.filter = 'blur(5px)';
+        mainApp.style.pointerEvents = 'none';
+    }
+}
+
+// Reset app security (emergency function)
+function resetAppSecurity() {
+    const confirmed = confirm('This will reset all security settings and unlock the app. Are you sure?');
+    if (confirmed) {
+        // Clear all stored data
+        localStorage.clear();
+        
+        // Reset all variables
+        biometricSetupCompleted = false;
+        storedBiometricCredential = null;
+        biometricType = null;
+        isAppLocked = false;
+        isAuthenticated = true;
+        
+        // Hide overlay and remove blur
+        hideUnlockOverlay();
+        const mainApp = document.getElementById('main-app');
+        if (mainApp) {
+            mainApp.style.filter = 'none';
+            mainApp.style.pointerEvents = 'auto';
+        }
+        
+        // Update UI
+        updateLockButton();
+        
+        showNotification('🔓 Security reset completed. Please setup authentication again.', 'success');
+        
+        // Show setup modal after delay
+        setTimeout(() => {
+            showBiometricSetupModal();
+        }, 2000);
+    }
+}
+
+// Contact support (placeholder)
+function contactSupport() {
+    alert('Contact Support:\n\nEmail: support@shopeasy.com\nPhone: +1-800-SHOPEASY\n\nOr visit: https://github.com/ctrlXmir/reactify-mir');
+}
+
+// Check for suspicious activity (app opened too many times while locked)
+function checkSuspiciousActivity() {
+    const lockState = localStorage.getItem('appLockState');
+    const lockTimestamp = localStorage.getItem('lockTimestamp');
+    const attemptCount = parseInt(localStorage.getItem('unlockAttempts') || '0');
+    
+    if (lockState === 'LOCKED' && lockTimestamp) {
+        const lockTime = parseInt(lockTimestamp);
+        const timeSinceLock = Date.now() - lockTime;
+        
+        // Increment attempt counter
+        localStorage.setItem('unlockAttempts', (attemptCount + 1).toString());
+        
+        console.log('🔍 Suspicious activity check:', {
+            timeSinceLock: Math.round(timeSinceLock / 1000) + 's',
+            attempts: attemptCount + 1
+        });
+        
+        // If too many attempts, add extra security
+        if (attemptCount > 10) {
+            console.log('🚨 Too many unlock attempts detected');
+            showNotification('🚨 Multiple unlock attempts detected. Extra security enabled.', 'error');
+            
+            // Add delay for security
+            setTimeout(() => {
+                forcePersistentLock();
+            }, 2000);
+        }
+    }
+}
+
 window.attemptBiometricUnlock = attemptBiometricUnlock;
 window.setupPasswordLock = setupPasswordLock;
 window.savePassword = savePassword;
@@ -2644,6 +2808,8 @@ window.closePasswordSetup = closePasswordSetup;
 window.showPasswordUnlock = showPasswordUnlock;
 window.verifyPassword = verifyPassword;
 window.disableLockFeature = disableLockFeature;
+window.resetAppSecurity = resetAppSecurity;
+window.contactSupport = contactSupport;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
@@ -2669,15 +2835,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Load stored biometric data on page load
+// Load stored biometric data and check persistent lock state
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📱 Loading stored biometric data...');
+    console.log('📱 Loading stored authentication data...');
     
     try {
         const storedCredential = localStorage.getItem('biometricCredential');
         const storedType = localStorage.getItem('biometricType');
         const lockMethod = localStorage.getItem('lockMethod');
         const setupCompleted = localStorage.getItem('biometricSetupCompleted');
+        const persistentLockState = localStorage.getItem('appLockState');
+        const lockTimestamp = localStorage.getItem('lockTimestamp');
+        
+        console.log('🔍 Checking persistent lock state:', {
+            lockState: persistentLockState,
+            timestamp: lockTimestamp,
+            setupCompleted: setupCompleted
+        });
         
         if (setupCompleted === 'true') {
             if (lockMethod === 'password' || storedType === 'password') {
@@ -2700,16 +2874,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            // Check if app was previously locked
+            if (persistentLockState === 'LOCKED') {
+                console.log('🔒 App was previously locked - enforcing lock state');
+                
+                // Check for suspicious activity
+                checkSuspiciousActivity();
+                
+                // Force lock state immediately
+                isAppLocked = true;
+                isAuthenticated = false;
+                
+                // Apply lock immediately
+                setTimeout(() => {
+                    forcePersistentLock();
+                }, 100);
+                
+            } else {
+                console.log('🔓 App was not locked previously');
+                isAppLocked = false;
+                isAuthenticated = false; // Still require authentication
+                
+                // Reset attempt counter if app wasn't locked
+                localStorage.removeItem('unlockAttempts');
+            }
+            
             // Update lock button state
             updateLockButton();
         } else {
             console.log('ℹ️ No lock setup found');
         }
     } catch (error) {
-        console.error('❌ Error loading stored biometric data:', error);
-        // Clear corrupted data
+        console.error('❌ Error loading stored data:', error);
+        // Clear corrupted data but preserve lock state
+        const lockState = localStorage.getItem('appLockState');
         localStorage.removeItem('biometricCredential');
         localStorage.removeItem('biometricType');
         localStorage.removeItem('biometricSetupCompleted');
+        
+        if (lockState === 'LOCKED') {
+            console.log('🔒 Preserving lock state despite data corruption');
+            showCorruptedDataLockScreen();
+        }
     }
 });
