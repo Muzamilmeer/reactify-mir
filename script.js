@@ -957,6 +957,313 @@ window.trackOrder = trackOrder;
 window.closeOrderModal = closeOrderModal;
 window.proceedToCheckout = proceedToCheckout;
 
+// Biometric Authentication System
+let biometricSupported = false;
+let isAuthenticated = false;
+
+// Check biometric support on page load
+if ('navigator' in window && 'credentials' in navigator) {
+    // Check for WebAuthn support
+    biometricSupported = true;
+}
+
+function showBiometricLogin() {
+    const modalOverlay = document.getElementById('biometric-modal-overlay');
+    modalOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    playSound('themeChange');
+    showNotification('🔐 Biometric login opened', 'info');
+}
+
+function closeBiometricModal() {
+    const modalOverlay = document.getElementById('biometric-modal-overlay');
+    modalOverlay.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+async function authenticateFingerprint() {
+    const statusElement = document.getElementById('fingerprint-status');
+    const statusText = statusElement.querySelector('.status-text');
+    
+    // Update status to scanning
+    statusElement.className = 'biometric-status scanning';
+    statusText.textContent = 'Scanning fingerprint...';
+    
+    playSound('themeChange');
+    
+    try {
+        // Simulate fingerprint authentication (in real app, use WebAuthn API)
+        await simulateBiometricAuth('fingerprint');
+        
+        // Success
+        statusElement.className = 'biometric-status success';
+        statusText.textContent = '✓ Fingerprint authenticated!';
+        
+        playSound('addToCart');
+        showNotification('🎉 Fingerprint authentication successful!', 'success');
+        
+        setTimeout(() => {
+            isAuthenticated = true;
+            closeBiometricModal();
+            showNotification('🔓 You are now logged in securely', 'success');
+        }, 1500);
+        
+    } catch (error) {
+        // Error
+        statusElement.className = 'biometric-status error';
+        statusText.textContent = '❌ Authentication failed. Try again.';
+        
+        showNotification('❌ Fingerprint authentication failed', 'error');
+        
+        setTimeout(() => {
+            statusElement.className = 'biometric-status';
+            statusText.textContent = 'Touch sensor to authenticate';
+        }, 3000);
+    }
+}
+
+async function authenticateFace() {
+    const statusElement = document.getElementById('face-status');
+    const statusText = statusElement.querySelector('.status-text');
+    
+    // Update status to scanning
+    statusElement.className = 'biometric-status scanning';
+    statusText.textContent = 'Scanning face...';
+    
+    playSound('themeChange');
+    
+    try {
+        // Simulate face recognition
+        await simulateBiometricAuth('face');
+        
+        // Success
+        statusElement.className = 'biometric-status success';
+        statusText.textContent = '✓ Face recognized!';
+        
+        playSound('addToCart');
+        showNotification('🎉 Face recognition successful!', 'success');
+        
+        setTimeout(() => {
+            isAuthenticated = true;
+            closeBiometricModal();
+            showNotification('🔓 You are now logged in securely', 'success');
+        }, 1500);
+        
+    } catch (error) {
+        // Error
+        statusElement.className = 'biometric-status error';
+        statusText.textContent = '❌ Face not recognized. Try again.';
+        
+        showNotification('❌ Face recognition failed', 'error');
+        
+        setTimeout(() => {
+            statusElement.className = 'biometric-status';
+            statusText.textContent = 'Position your face in camera';
+        }, 3000);
+    }
+}
+
+function simulateBiometricAuth(type) {
+    return new Promise((resolve, reject) => {
+        // Simulate authentication process (2-4 seconds)
+        const authTime = Math.random() * 2000 + 2000;
+        
+        setTimeout(() => {
+            // 80% success rate for demo
+            if (Math.random() > 0.2) {
+                resolve(type);
+            } else {
+                reject(new Error('Authentication failed'));
+            }
+        }, authTime);
+    });
+}
+
+function showPasswordLogin() {
+    showNotification('🔑 Password login feature coming soon!', 'info');
+    closeBiometricModal();
+}
+
+// Live Chat System
+let chatOpen = false;
+let chatMessages = [];
+let chatResponses = {
+    'track my order': 'I can help you track your order! Please provide your order number or contact me on WhatsApp at +91 9103594759.',
+    'need help with payment': 'For payment issues, you can contact me directly on WhatsApp at +91 9103594759. I\'ll resolve it quickly!',
+    'product question': 'What would you like to know about our products? I\'m here to help with any questions!',
+    'hello': 'Hello! I\'m Muzamil. How can I assist you today?',
+    'hi': 'Hi there! Welcome to ShopEasy. What can I help you with?',
+    'help': 'I\'m here to help! You can ask me about orders, products, payments, or anything else.',
+    'thanks': 'You\'re welcome! Happy to help. Is there anything else you need?',
+    'thank you': 'My pleasure! Feel free to reach out anytime you need assistance.'
+};
+
+function openChat() {
+    const chatWidget = document.getElementById('chat-widget');
+    const chatFloatBtn = document.getElementById('chat-float-btn');
+    
+    chatWidget.classList.add('open');
+    chatWidget.classList.remove('minimized');
+    chatFloatBtn.style.display = 'none';
+    chatOpen = true;
+    
+    // Clear notification
+    const notification = document.getElementById('chat-notification');
+    if (notification) {
+        notification.style.display = 'none';
+    }
+    
+    playSound('themeChange');
+}
+
+function toggleChat() {
+    const chatWidget = document.getElementById('chat-widget');
+    const chatBody = document.getElementById('chat-body');
+    const chatToggleIcon = document.getElementById('chat-toggle-icon');
+    const chatFloatBtn = document.getElementById('chat-float-btn');
+    
+    if (chatWidget.classList.contains('minimized')) {
+        // Expand
+        chatWidget.classList.remove('minimized');
+        chatBody.style.display = 'flex';
+        chatToggleIcon.className = 'fas fa-chevron-up';
+    } else {
+        // Minimize
+        chatWidget.classList.add('minimized');
+        chatBody.style.display = 'none';
+        chatToggleIcon.className = 'fas fa-chevron-down';
+        
+        setTimeout(() => {
+            chatWidget.classList.remove('open');
+            chatFloatBtn.style.display = 'flex';
+            chatOpen = false;
+        }, 300);
+    }
+    
+    playSound('themeChange');
+}
+
+function sendMessage() {
+    const chatInput = document.getElementById('chat-input');
+    const message = chatInput.value.trim();
+    
+    if (message === '') return;
+    
+    // Add user message
+    addMessage(message, 'user');
+    chatInput.value = '';
+    
+    // Play send sound
+    playSound('themeChange');
+    
+    // Simulate typing delay and response
+    setTimeout(() => {
+        const response = getChatResponse(message);
+        addMessage(response, 'support');
+        playSound('addToCart');
+    }, 1000 + Math.random() * 1000);
+}
+
+function sendQuickReply(message) {
+    addMessage(message, 'user');
+    
+    playSound('themeChange');
+    
+    setTimeout(() => {
+        const response = getChatResponse(message);
+        addMessage(response, 'support');
+        playSound('addToCart');
+    }, 800);
+}
+
+function addMessage(text, sender) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    
+    const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    if (sender === 'user') {
+        messageDiv.className = 'message user-message';
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150&q=80" alt="User">
+            </div>
+            <div class="message-content">
+                <p>${text}</p>
+                <span class="message-time">${currentTime}</span>
+            </div>
+        `;
+    } else {
+        messageDiv.className = 'message support-message';
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <img src="https://res.cloudinary.com/dxjkbpmgm/image/upload/v1744384921/IMG_20250411_202120_wx6x6n.png" alt="Support">
+            </div>
+            <div class="message-content">
+                <p>${text}</p>
+                <span class="message-time">${currentTime}</span>
+            </div>
+        `;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function getChatResponse(message) {
+    const lowerMessage = message.toLowerCase();
+    
+    // Check for specific responses
+    for (let key in chatResponses) {
+        if (lowerMessage.includes(key)) {
+            return chatResponses[key];
+        }
+    }
+    
+    // Default responses
+    const defaultResponses = [
+        "Thanks for your message! For immediate assistance, please contact me on WhatsApp at +91 9103594759.",
+        "I'd be happy to help! You can reach me directly on WhatsApp at +91 9103594759 for faster support.",
+        "Great question! For detailed help, please message me on WhatsApp at +91 9103594759.",
+        "I'm here to assist you! Feel free to contact me on WhatsApp at +91 9103594759 for quick support."
+    ];
+    
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+}
+
+// Initialize chat on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Show chat notification after 5 seconds
+    setTimeout(() => {
+        const notification = document.getElementById('chat-notification');
+        if (notification && !chatOpen) {
+            notification.style.display = 'flex';
+        }
+    }, 5000);
+    
+    // Enter key support for chat
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    }
+});
+
+// Global function access
+window.showBiometricLogin = showBiometricLogin;
+window.closeBiometricModal = closeBiometricModal;
+window.authenticateFingerprint = authenticateFingerprint;
+window.authenticateFace = authenticateFace;
+window.showPasswordLogin = showPasswordLogin;
+window.openChat = openChat;
+window.toggleChat = toggleChat;
+window.sendMessage = sendMessage;
+window.sendQuickReply = sendQuickReply;
+
 
 
 // Debug function
