@@ -12,145 +12,145 @@ const sampleProducts = [
         id: 1,
         title: "Premium Wireless Headphones",
         description: "High-quality sound with noise cancellation",
-        price: 199.99,
-        originalPrice: 249.99,
+        price: 2999,
+        originalPrice: 3999,
         category: "electronics",
         rating: 4.8,
         reviews: 1250,
         badge: "Sale",
-        icon: "fas fa-headphones"
+        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop"
     },
     {
         id: 2,
         title: "Smart Fitness Watch",
         description: "Track your health and fitness goals",
-        price: 299.99,
-        originalPrice: 399.99,
+        price: 4999,
+        originalPrice: 6999,
         category: "electronics",
         rating: 4.6,
         reviews: 890,
         badge: "Hot",
-        icon: "fas fa-clock"
+        image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop"
     },
     {
         id: 3,
         title: "Designer Leather Jacket",
         description: "Premium quality genuine leather",
-        price: 159.99,
-        originalPrice: 199.99,
+        price: 3999,
+        originalPrice: 5999,
         category: "fashion",
         rating: 4.9,
         reviews: 567,
         badge: "New",
-        icon: "fas fa-tshirt"
+        image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=300&fit=crop"
     },
     {
         id: 4,
         title: "Professional Camera",
         description: "Capture perfect moments in 4K",
-        price: 899.99,
-        originalPrice: 1199.99,
+        price: 8999,
+        originalPrice: 12999,
         category: "electronics",
         rating: 4.7,
         reviews: 234,
         badge: "Sale",
-        icon: "fas fa-camera"
+        image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&h=300&fit=crop"
     },
     {
         id: 5,
         title: "Luxury Handbag",
         description: "Elegant design for every occasion",
-        price: 129.99,
-        originalPrice: 179.99,
+        price: 2499,
+        originalPrice: 3499,
         category: "fashion",
         rating: 4.5,
         reviews: 445,
         badge: "Trending",
-        icon: "fas fa-shopping-bag"
+        image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&h=300&fit=crop"
     },
     {
         id: 6,
         title: "Smart Home Speaker",
         description: "Voice controlled smart assistant",
-        price: 89.99,
-        originalPrice: 119.99,
+        price: 1999,
+        originalPrice: 2999,
         category: "electronics",
         rating: 4.4,
         reviews: 1890,
         badge: "Popular",
-        icon: "fas fa-volume-up"
+        image: "https://images.unsplash.com/photo-1589492477829-5e65395b66cc?w=400&h=300&fit=crop"
     },
     {
         id: 7,
         title: "Yoga Mat Set",
         description: "Complete set for your yoga practice",
-        price: 49.99,
-        originalPrice: 69.99,
+        price: 899,
+        originalPrice: 1299,
         category: "sports",
         rating: 4.6,
         reviews: 678,
         badge: "Bestseller",
-        icon: "fas fa-dumbbell"
+        image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=300&fit=crop"
     },
     {
         id: 8,
         title: "Coffee Maker Deluxe",
         description: "Brew perfect coffee every morning",
-        price: 179.99,
-        originalPrice: 229.99,
+        price: 3499,
+        originalPrice: 4999,
         category: "home",
         rating: 4.8,
         reviews: 1123,
         badge: "Choice",
-        icon: "fas fa-coffee"
+        image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop"
     },
     {
         id: 9,
         title: "Programming Book Bundle",
         description: "Complete guide to modern development",
-        price: 79.99,
-        originalPrice: 119.99,
+        price: 1499,
+        originalPrice: 2199,
         category: "books",
         rating: 4.9,
         reviews: 892,
         badge: "Educational",
-        icon: "fas fa-book"
+        image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop"
     },
     {
         id: 10,
         title: "Gaming Mechanical Keyboard",
         description: "RGB backlit with mechanical switches",
-        price: 149.99,
-        originalPrice: 199.99,
+        price: 2799,
+        originalPrice: 3799,
         category: "electronics",
         rating: 4.7,
         reviews: 756,
         badge: "Gaming",
-        icon: "fas fa-keyboard"
+        image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&h=300&fit=crop"
     },
     {
         id: 11,
         title: "Running Shoes Pro",
         description: "Lightweight and comfortable for athletes",
-        price: 119.99,
-        originalPrice: 159.99,
+        price: 2199,
+        originalPrice: 2999,
         category: "sports",
         rating: 4.5,
         reviews: 1034,
         badge: "Sport",
-        icon: "fas fa-running"
+        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop"
     },
     {
         id: 12,
         title: "Indoor Plant Collection",
         description: "Beautiful plants to brighten your home",
-        price: 39.99,
-        originalPrice: 59.99,
+        price: 699,
+        originalPrice: 999,
         category: "home",
         rating: 4.3,
         reviews: 445,
         badge: "Green",
-        icon: "fas fa-leaf"
+        image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop"
     }
 ];
 
@@ -188,9 +188,12 @@ const playSound = (type) => {
             setTimeout(() => playTone(523.25, 0.8), 1400); // C5 - long final note
             break;
         case 'addToCart':
-            // Success sound
-            playTone(659.25, 0.1);
-            setTimeout(() => playTone(783.99, 0.15), 50);
+            // Enhanced success sound - celebration melody
+            playTone(523.25, 0.15); // C5
+            setTimeout(() => playTone(659.25, 0.15), 80); // E5
+            setTimeout(() => playTone(783.99, 0.2), 160); // G5
+            setTimeout(() => playTone(1046.50, 0.25), 250); // C6
+            setTimeout(() => playTone(1318.51, 0.3), 350); // E6 - high celebration note
             break;
         case 'removeFromCart':
             // Remove sound
@@ -219,8 +222,20 @@ function showSplashScreen() {
     const splashScreen = document.getElementById('splash-screen');
     const mainApp = document.getElementById('main-app');
     
-    // Play welcome sound
-    setTimeout(() => playSound('splash'), 500);
+    // Enable sound on any click during splash screen
+    splashScreen.addEventListener('click', () => {
+        playSound('splash');
+    }, { once: true });
+    
+    // Play welcome sound - with user interaction check
+    setTimeout(() => {
+        // Try to play sound, handle autoplay restrictions
+        try {
+            playSound('splash');
+        } catch (error) {
+            console.log('Audio autoplay prevented, will play on first user interaction');
+        }
+    }, 800);
     
     // Hide splash screen after 4 seconds (longer to match the sound)
     setTimeout(() => {
@@ -304,15 +319,15 @@ function createProductCard(product) {
     card.className = 'product-card';
     card.innerHTML = `
         <div class="product-image">
-            <i class="${product.icon}"></i>
+            <img src="${product.image}" alt="${product.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 0;">
             <span class="product-badge">${product.badge}</span>
         </div>
         <div class="product-info">
             <h4 class="product-title">${product.title}</h4>
             <p class="product-description">${product.description}</p>
             <div class="product-price">
-                <span class="current-price">$${product.price}</span>
-                <span class="original-price">$${product.originalPrice}</span>
+                <span class="current-price">₹${product.price.toLocaleString('en-IN')}</span>
+                <span class="original-price">₹${product.originalPrice.toLocaleString('en-IN')}</span>
             </div>
             <div class="product-rating">
                 <div class="stars">
@@ -480,11 +495,11 @@ function updateCartUI() {
             cartItem.className = 'cart-item';
             cartItem.innerHTML = `
                 <div class="cart-item-image">
-                    <i class="${item.icon}"></i>
+                    <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
                 </div>
                 <div class="cart-item-details">
                     <div class="cart-item-title">${item.title}</div>
-                    <div class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</div>
+                    <div class="cart-item-price">₹${(item.price * item.quantity).toLocaleString('en-IN')}</div>
                     <div class="quantity-controls">
                         <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">-</button>
                         <span>${item.quantity}</span>
@@ -501,7 +516,7 @@ function updateCartUI() {
     
     // Update total
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    cartTotal.textContent = total.toFixed(2);
+    cartTotal.textContent = total.toLocaleString('en-IN');
 }
 
 function openCart() {
@@ -538,7 +553,7 @@ function checkout() {
     checkoutBtn.disabled = true;
     
     setTimeout(() => {
-        alert(`Order placed successfully!\nTotal: $${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}\nThank you for shopping with ShopEasy!`);
+        alert(`Order placed successfully!\nTotal: ₹${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString('en-IN')}\nThank you for shopping with ShopEasy!`);
         
         // Clear cart
         cart = [];
