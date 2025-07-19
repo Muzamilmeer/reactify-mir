@@ -207,6 +207,15 @@ const playSound = (type) => {
             setTimeout(() => playTone(783.99, 0.1), 160);
             setTimeout(() => playTone(1046.50, 0.2), 240);
             break;
+        case 'openApp':
+            // App opening sound - magical ascending melody
+            playTone(392.00, 0.2); // G4
+            setTimeout(() => playTone(523.25, 0.2), 100); // C5
+            setTimeout(() => playTone(659.25, 0.2), 200); // E5
+            setTimeout(() => playTone(783.99, 0.25), 300); // G5
+            setTimeout(() => playTone(1046.50, 0.3), 400); // C6
+            setTimeout(() => playTone(1318.51, 0.4), 500); // E6 - magical high note
+            break;
     }
 };
 
@@ -221,32 +230,29 @@ document.addEventListener('DOMContentLoaded', function() {
 function showSplashScreen() {
     const splashScreen = document.getElementById('splash-screen');
     const mainApp = document.getElementById('main-app');
+    const openBtn = document.getElementById('open-app-btn');
     
-    // Enable sound on any click during splash screen
-    splashScreen.addEventListener('click', () => {
-        playSound('splash');
-    }, { once: true });
-    
-    // Play welcome sound - with user interaction check
-    setTimeout(() => {
-        // Try to play sound, handle autoplay restrictions
-        try {
-            playSound('splash');
-        } catch (error) {
-            console.log('Audio autoplay prevented, will play on first user interaction');
-        }
-    }, 800);
-    
-    // Hide splash screen after 4 seconds (longer to match the sound)
-    setTimeout(() => {
-        splashScreen.style.opacity = '0';
+    // Handle open button click
+    openBtn.addEventListener('click', () => {
+        // Play special opening sound
+        playSound('openApp');
+        
+        // Add click animation to button
+        openBtn.style.transform = 'translateY(-1px) scale(0.95)';
+        openBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening...';
+        openBtn.disabled = true;
+        
+        // Wait for sound to play, then open app
         setTimeout(() => {
-            splashScreen.style.display = 'none';
-            mainApp.classList.remove('hidden');
-            mainApp.style.opacity = '1';
-            loadProducts();
-        }, 500);
-    }, 4000);
+            splashScreen.style.opacity = '0';
+            setTimeout(() => {
+                splashScreen.style.display = 'none';
+                mainApp.classList.remove('hidden');
+                mainApp.style.opacity = '1';
+                loadProducts();
+            }, 500);
+        }, 1200); // Slightly longer to let the full sound play
+    });
 }
 
 // Event Listeners
