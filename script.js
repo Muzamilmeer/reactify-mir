@@ -289,6 +289,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Lock button initialized');
         }, 100);
         
+        // Add user activity listeners for auto-lock timer
+        const activityEvents = ['click', 'scroll', 'keypress', 'mousemove', 'touchstart'];
+        activityEvents.forEach(event => {
+            document.addEventListener(event, resetAutoLockTimer, { passive: true });
+        });
+        console.log('✅ Activity listeners added for auto-lock');
+        
         console.log('✅ ShopEasy initialized successfully!');
         
         // Check biometric support after DOM is ready (optional)
@@ -990,6 +997,8 @@ let isAuthenticated = false;
 let isAppLocked = false;
 let biometricCredential = null;
 let biometricSetupCompleted = false; // Track if user has completed biometric setup
+let autoLockTimer = null; // Timer for auto-lock feature
+let autoLockDelay = 30000; // Auto-lock after 30 seconds of inactivity
 
 // Check real biometric support on page load
 async function checkBiometricSupport() {
@@ -1052,8 +1061,17 @@ function showBiometricLogin() {
 
 function closeBiometricModal() {
     const modalOverlay = document.getElementById('biometric-modal-overlay');
-    modalOverlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        console.log('✅ Biometric modal closed');
+        
+        // Remove setup message if it exists
+        const setupMessage = modalOverlay.querySelector('.setup-message');
+        if (setupMessage) {
+            setupMessage.remove();
+        }
+    }
 }
 
 // Real Fingerprint Authentication using WebAuthn
@@ -1265,6 +1283,9 @@ function lockApp() {
     isAppLocked = true;
     isAuthenticated = false;
     
+    // Stop auto-lock timer
+    stopAutoLockTimer();
+    
     // Add blur effect to main content
     const mainApp = document.getElementById('main-app');
     if (mainApp) {
@@ -1316,7 +1337,7 @@ function unlockApp() {
     
     // Show success notification
     try {
-        showNotification('🔓 App unlocked successfully!', 'success');
+        showNotification('🔓 App unlocked! Will auto-lock after 30 seconds of inactivity.', 'success');
         console.log('✅ Success notification shown');
     } catch (error) {
         console.log('⚠️ Could not show notification:', error);
@@ -1324,7 +1345,46 @@ function unlockApp() {
         alert('🔓 App unlocked successfully!');
     }
     
+    // Start auto-lock timer
+    startAutoLockTimer();
+    
     console.log('✅ App unlock completed');
+}
+
+// Auto-lock functionality
+function startAutoLockTimer() {
+    // Clear existing timer
+    if (autoLockTimer) {
+        clearTimeout(autoLockTimer);
+    }
+    
+    console.log(`⏰ Auto-lock timer started (${autoLockDelay/1000} seconds)`);
+    
+    autoLockTimer = setTimeout(() => {
+        if (!isAppLocked && biometricSetupCompleted) {
+            console.log('🔒 Auto-locking app due to inactivity');
+            showNotification('🔒 Auto-locking due to inactivity...', 'warning');
+            setTimeout(() => {
+                lockApp();
+            }, 1000);
+        }
+    }, autoLockDelay);
+}
+
+// Reset auto-lock timer on user activity
+function resetAutoLockTimer() {
+    if (!isAppLocked && biometricSetupCompleted && isAuthenticated) {
+        startAutoLockTimer();
+    }
+}
+
+// Stop auto-lock timer
+function stopAutoLockTimer() {
+    if (autoLockTimer) {
+        clearTimeout(autoLockTimer);
+        autoLockTimer = null;
+        console.log('⏰ Auto-lock timer stopped');
+    }
 }
 
 function updateLockButton() {
@@ -1363,6 +1423,9 @@ function showUnlockOverlay() {
                 <button onclick="emergencyUnlock()" class="unlock-btn" style="background: #ff6b6b; margin-top: 10px;">
                     <i class="fas fa-key"></i> Emergency Unlock
                 </button>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <p style="font-size: 12px; opacity: 0.8; margin: 0;">Auto-lock: 30 seconds after unlock</p>
+                </div>
             </div>
         `;
         document.body.appendChild(overlay);
@@ -2039,6 +2102,9 @@ window.lockApp = lockApp;
 window.unlockApp = unlockApp;
 window.emergencyUnlock = emergencyUnlock;
 window.showBiometricSetupModal = showBiometricSetupModal;
+window.startAutoLockTimer = startAutoLockTimer;
+window.stopAutoLockTimer = stopAutoLockTimer;
+window.resetAutoLockTimer = resetAutoLockTimer;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
