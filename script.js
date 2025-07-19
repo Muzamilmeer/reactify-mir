@@ -216,16 +216,7 @@ const playSound = (type) => {
     };
     
     switch(type) {
-        case 'splash':
-            // Welcome sound - longer and louder melody
-            playTone(523.25, 0.4); // C5
-            setTimeout(() => playTone(659.25, 0.4), 200); // E5
-            setTimeout(() => playTone(783.99, 0.5), 400); // G5
-            setTimeout(() => playTone(1046.50, 0.6), 700); // C6
-            setTimeout(() => playTone(783.99, 0.4), 1000); // G5
-            setTimeout(() => playTone(659.25, 0.4), 1200); // E5
-            setTimeout(() => playTone(523.25, 0.8), 1400); // C5 - long final note
-            break;
+
         case 'addToCart':
             // Enhanced success sound - celebration melody
             playTone(523.25, 0.15); // C5
@@ -246,15 +237,7 @@ const playSound = (type) => {
             setTimeout(() => playTone(783.99, 0.1), 160);
             setTimeout(() => playTone(1046.50, 0.2), 240);
             break;
-        case 'openApp':
-            // App opening sound - magical ascending melody
-            playTone(392.00, 0.2); // G4
-            setTimeout(() => playTone(523.25, 0.2), 100); // C5
-            setTimeout(() => playTone(659.25, 0.2), 200); // E5
-            setTimeout(() => playTone(783.99, 0.25), 300); // G5
-            setTimeout(() => playTone(1046.50, 0.3), 400); // C6
-            setTimeout(() => playTone(1318.51, 0.4), 500); // E6 - magical high note
-            break;
+
         case 'wishlistAdd':
             // Wishlist add sound - sweet ascending notes
             playTone(659.25, 0.15); // E5
@@ -278,38 +261,9 @@ const playSound = (type) => {
 // Initialize App
 document.addEventListener('DOMContentLoaded', function() {
     products = [...sampleProducts];
-    showSplashScreen();
+    loadProducts();
     initializeEventListeners();
 });
-
-// Splash Screen
-function showSplashScreen() {
-    const splashScreen = document.getElementById('splash-screen');
-    const mainApp = document.getElementById('main-app');
-    const openBtn = document.getElementById('open-app-btn');
-    
-    // Handle open button click
-    openBtn.addEventListener('click', () => {
-        // Play special opening sound
-        playSound('openApp');
-        
-        // Add click animation to button
-        openBtn.style.transform = 'translateY(-1px) scale(0.95)';
-        openBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening...';
-        openBtn.disabled = true;
-        
-        // Wait for sound to play, then open app
-        setTimeout(() => {
-            splashScreen.style.opacity = '0';
-            setTimeout(() => {
-                splashScreen.style.display = 'none';
-                mainApp.classList.remove('hidden');
-                mainApp.style.opacity = '1';
-                loadProducts();
-            }, 500);
-        }, 1200); // Slightly longer to let the full sound play
-    });
-}
 
 // Event Listeners
 function initializeEventListeners() {
