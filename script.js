@@ -169,7 +169,7 @@ const playSound = (type) => {
         oscillator.frequency.value = frequency;
         oscillator.type = type;
         
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
         
         oscillator.start(audioContext.currentTime);
@@ -178,10 +178,14 @@ const playSound = (type) => {
     
     switch(type) {
         case 'splash':
-            // Welcome sound - ascending notes
-            playTone(523.25, 0.2); // C5
-            setTimeout(() => playTone(659.25, 0.2), 100); // E5
-            setTimeout(() => playTone(783.99, 0.3), 200); // G5
+            // Welcome sound - longer and louder melody
+            playTone(523.25, 0.4); // C5
+            setTimeout(() => playTone(659.25, 0.4), 200); // E5
+            setTimeout(() => playTone(783.99, 0.5), 400); // G5
+            setTimeout(() => playTone(1046.50, 0.6), 700); // C6
+            setTimeout(() => playTone(783.99, 0.4), 1000); // G5
+            setTimeout(() => playTone(659.25, 0.4), 1200); // E5
+            setTimeout(() => playTone(523.25, 0.8), 1400); // C5 - long final note
             break;
         case 'addToCart':
             // Success sound
@@ -218,7 +222,7 @@ function showSplashScreen() {
     // Play welcome sound
     setTimeout(() => playSound('splash'), 500);
     
-    // Hide splash screen after 3 seconds
+    // Hide splash screen after 4 seconds (longer to match the sound)
     setTimeout(() => {
         splashScreen.style.opacity = '0';
         setTimeout(() => {
@@ -227,7 +231,7 @@ function showSplashScreen() {
             mainApp.style.opacity = '1';
             loadProducts();
         }, 500);
-    }, 3000);
+    }, 4000);
 }
 
 // Event Listeners
