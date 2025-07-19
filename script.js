@@ -282,6 +282,13 @@ document.addEventListener('DOMContentLoaded', function() {
         products = [...sampleProducts];
         showSplashScreen();
         initializeEventListeners();
+        
+        // Initialize lock button state
+        setTimeout(() => {
+            updateLockButton();
+            console.log('✅ Lock button initialized');
+        }, 100);
+        
         console.log('✅ ShopEasy initialized successfully!');
         
         // Check biometric support after DOM is ready (optional)
@@ -982,6 +989,7 @@ let biometricSupported = false;
 let isAuthenticated = false;
 let isAppLocked = false;
 let biometricCredential = null;
+let biometricSetupCompleted = false; // Track if user has completed biometric setup
 
 // Check real biometric support on page load
 async function checkBiometricSupport() {
@@ -1105,14 +1113,15 @@ async function authenticateFingerprint() {
             setTimeout(() => {
                 console.log('🔐 Processing fingerprint authentication success...');
                 isAuthenticated = true;
+                biometricSetupCompleted = true; // Mark biometric setup as completed
                 closeBiometricModal();
                 
                 if (isAppLocked) {
                     console.log('🔓 App is locked, calling unlockApp()');
                     unlockApp();
                 } else {
-                    console.log('ℹ️ App not locked, just showing success message');
-                    showNotification('🔓 Fingerprint authentication successful', 'success');
+                    console.log('ℹ️ App not locked, showing success and enabling lock feature');
+                    showNotification('🔓 Fingerprint authentication successful! Lock feature now enabled.', 'success');
                     updateLockButton();
                 }
             }, 1500);
@@ -1197,14 +1206,15 @@ async function authenticateFace() {
             setTimeout(() => {
                 console.log('🔐 Processing face authentication success...');
                 isAuthenticated = true;
+                biometricSetupCompleted = true; // Mark biometric setup as completed
                 closeBiometricModal();
                 
                 if (isAppLocked) {
                     console.log('🔓 App is locked, calling unlockApp()');
                     unlockApp();
                 } else {
-                    console.log('ℹ️ App not locked, just showing success message');
-                    showNotification('🔓 Face recognition successful', 'success');
+                    console.log('ℹ️ App not locked, showing success and enabling lock feature');
+                    showNotification('🔓 Face recognition successful! Lock feature now enabled.', 'success');
                     updateLockButton();
                 }
             }, 1500);
@@ -1238,6 +1248,12 @@ function toggleAppLock() {
         // Try to unlock with biometrics
         showBiometricLogin();
     } else {
+        // Check if biometric setup is completed before allowing lock
+        if (!biometricSetupCompleted) {
+            showNotification('🔐 Please complete biometric authentication setup first!', 'warning');
+            showBiometricSetupModal();
+            return;
+        }
         // Lock the app
         lockApp();
     }
@@ -1317,9 +1333,16 @@ function updateLockButton() {
         if (isAppLocked) {
             lockBtn.innerHTML = '<i class="fas fa-unlock"></i> Unlock App';
             lockBtn.classList.add('locked');
+            lockBtn.classList.remove('disabled');
+        } else if (!biometricSetupCompleted) {
+            lockBtn.innerHTML = '<i class="fas fa-fingerprint"></i> Setup Lock';
+            lockBtn.classList.remove('locked');
+            lockBtn.classList.add('disabled');
+            lockBtn.title = 'Complete biometric authentication first to enable app lock';
         } else {
             lockBtn.innerHTML = '<i class="fas fa-lock"></i> Lock App';
-            lockBtn.classList.remove('locked');
+            lockBtn.classList.remove('locked', 'disabled');
+            lockBtn.title = 'Lock app with biometric authentication';
         }
     }
 }
@@ -1366,6 +1389,38 @@ function emergencyUnlock() {
         unlockApp();
     } else {
         console.log('❌ Emergency unlock cancelled');
+    }
+}
+
+// Show biometric setup modal
+function showBiometricSetupModal() {
+    const modal = document.getElementById('biometric-modal-overlay');
+    if (modal) {
+        // Update modal content for setup
+        const modalContent = modal.querySelector('.biometric-modal');
+        if (modalContent) {
+            const setupMessage = document.createElement('div');
+            setupMessage.className = 'setup-message';
+            setupMessage.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea;">
+                    <h3 style="color: #667eea; margin: 0 0 10px 0;">🔐 Biometric Setup Required</h3>
+                    <p style="margin: 0; color: #666;">Complete fingerprint or face authentication to enable app lock feature.</p>
+                </div>
+            `;
+            
+            // Remove existing setup message if any
+            const existingMessage = modalContent.querySelector('.setup-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // Insert at the beginning
+            modalContent.insertBefore(setupMessage, modalContent.firstChild);
+        }
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        showNotification('🔐 Setup biometric authentication to enable lock feature', 'info');
     }
 }
 
@@ -1983,6 +2038,7 @@ window.toggleAppLock = toggleAppLock;
 window.lockApp = lockApp;
 window.unlockApp = unlockApp;
 window.emergencyUnlock = emergencyUnlock;
+window.showBiometricSetupModal = showBiometricSetupModal;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
 window.sendMessage = sendMessage;
