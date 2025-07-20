@@ -95,8 +95,9 @@ function improvedToggleChat() {
     if (!chatWidget) return;
     
     if (isChatMinimized) {
-        // MAXIMIZE: Show chat body
+        // MAXIMIZE: Show chat body (DON'T CLOSE CHAT)
         chatWidget.classList.remove('minimized');
+        chatWidget.style.display = 'block'; // Ensure it stays visible
         if (chatBody) {
             chatBody.style.display = 'flex';
         }
@@ -105,19 +106,24 @@ function improvedToggleChat() {
         }
         isChatMinimized = false;
         
-        console.log('💬 Chat maximized');
+        console.log('💬 Chat maximized - Muzamil Support visible');
     } else {
-        // MINIMIZE: Hide chat body, show only header
+        // MINIMIZE: Hide chat body, KEEP HEADER VISIBLE (DON'T CLOSE)
         chatWidget.classList.add('minimized');
+        chatWidget.style.display = 'block'; // Keep chat widget visible
         if (chatBody) {
             chatBody.style.display = 'none';
         }
         if (chatToggleIcon) {
             chatToggleIcon.className = 'fas fa-chevron-up';
         }
+        // DON'T show floating button - keep header visible
+        if (chatFloatBtn) {
+            chatFloatBtn.style.display = 'none';
+        }
         isChatMinimized = true;
         
-        console.log('💬 Chat minimized');
+        console.log('💬 Chat minimized - Muzamil Support header still visible');
     }
     
     // Play sound if available

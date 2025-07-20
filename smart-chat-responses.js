@@ -385,7 +385,8 @@ function detectLanguage(message) {
 const originalSendMessage = window.sendMessage;
 if (originalSendMessage) {
     window.sendMessage = function() {
-        const chatInput = document.getElementById('chatInput');
+        // Try both possible input IDs
+        const chatInput = document.getElementById('chat-input') || document.getElementById('chatInput');
         if (!chatInput || !chatInput.value.trim()) return;
         
         const userMessage = chatInput.value.trim();
@@ -402,8 +403,10 @@ if (originalSendMessage) {
 } else {
     // If original function doesn't exist, create enhanced version
     window.sendMessage = function() {
-        const chatInput = document.getElementById('chatInput');
-        const chatMessages = document.getElementById('chatMessages');
+        // Try both possible input IDs
+        const chatInput = document.getElementById('chat-input') || document.getElementById('chatInput');
+        // Try both possible message container IDs
+        const chatMessages = document.getElementById('chat-messages') || document.getElementById('chatMessages');
         
         if (!chatInput || !chatMessages || !chatInput.value.trim()) return;
         
@@ -425,7 +428,8 @@ if (originalSendMessage) {
 
 // Add user message function
 function addUserMessage(message) {
-    const chatMessages = document.getElementById('chatMessages');
+    // Try both possible message container IDs
+    const chatMessages = document.getElementById('chat-messages') || document.getElementById('chatMessages');
     if (!chatMessages) return;
     
     const messageDiv = document.createElement('div');
@@ -456,7 +460,8 @@ function addUserMessage(message) {
 
 // Add bot message function
 function addBotMessage(message) {
-    const chatMessages = document.getElementById('chatMessages');
+    // Try both possible message container IDs
+    const chatMessages = document.getElementById('chat-messages') || document.getElementById('chatMessages');
     if (!chatMessages) return;
     
     const messageDiv = document.createElement('div');
