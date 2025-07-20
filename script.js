@@ -1109,8 +1109,6 @@ function generateUserId() {
 }
 
 function showBiometricLogin() {
-    console.log('🚫 Biometric login feature removed - function disabled');
-    return false;
     const modalOverlay = document.getElementById('biometric-modal-overlay');
     modalOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -1414,10 +1412,12 @@ async function verifyBiometricAuthentication() {
     }
 }
 
-// App Lock/Unlock Functions - REMOVED as per user request
+// App Lock/Unlock Functions
 function toggleAppLock() {
-    console.log('🚫 App lock feature removed - function disabled');
-    return false;
+    if (isAppLocked) {
+        // Try to unlock with biometrics
+        showBiometricLogin();
+    } else {
         // Check if biometric setup is completed before allowing lock
         if (!biometricSetupCompleted) {
             showNotification('🔐 Please complete biometric authentication setup first!', 'warning');
@@ -2357,10 +2357,47 @@ window.startAutoLockTimer = startAutoLockTimer;
 window.stopAutoLockTimer = stopAutoLockTimer;
 window.resetAutoLockTimer = resetAutoLockTimer;
 
-// Biometric unlock function - REMOVED as per user request
+// Attempt biometric unlock from overlay
 async function attemptBiometricUnlock() {
-    console.log('🚫 Biometric unlock disabled - function removed');
-    return false;
+    console.log('🔐 Attempting biometric unlock from overlay...');
+    
+    const unlockStatus = document.getElementById('unlock-status');
+    const statusText = unlockStatus.querySelector('.status-text');
+    const unlockBtn = document.getElementById('biometric-unlock-btn');
+    const btnText = document.getElementById('unlock-btn-text');
+    
+    // Update UI to show authentication in progress
+    unlockStatus.className = 'unlock-status authenticating';
+    statusText.textContent = 'Authenticating...';
+    unlockBtn.disabled = true;
+    btnText.textContent = 'Authenticating...';
+    
+    try {
+        let verified = false;
+        
+        if (biometricType === 'password') {
+            // For password unlock, show password input
+            showPasswordUnlock();
+            return; // Exit here, password flow will handle the rest
+        } else {
+            // For biometric unlock
+            verified = await verifyBiometricAuthentication();
+        }
+        
+        if (verified) {
+            console.log('✅ Authentication unlock successful');
+            
+            // Show success
+            unlockStatus.className = 'unlock-status success';
+            statusText.textContent = '✓ Authentication successful!';
+            btnText.textContent = 'Unlocking...';
+            
+            // Wait a moment then unlock
+            setTimeout(() => {
+                unlockApp();
+            }, 1000);
+            
+        } else {
             throw new Error('Authentication verification failed');
         }
         
