@@ -450,40 +450,51 @@ const KEYWORD_MAPPING = {
     thanks: ['thank', 'thanks', 'appreciate', 'grateful', 'shukriya', 'dhanyawad', 'meherbani']
 };
 
-// Smart Response Generator
+// Smart Response Generator with Anti-Repeat System
+let lastResponses = JSON.parse(localStorage.getItem('lastChatResponses') || '[]');
+let responseHistory = new Set(lastResponses);
+
 function generateSmartResponse(userMessage) {
     const message = userMessage.toLowerCase();
-    let responseCategory = 'casual';
     let language = detectLanguage(message);
     
-    // Detect intent based on keywords
-    for (let [category, keywords] of Object.entries(KEYWORD_MAPPING)) {
-        if (keywords.some(keyword => message.includes(keyword))) {
-            responseCategory = category;
-            break;
-        }
-    }
-    
-    // Map categories to response arrays
-    const categoryMap = {
-        natural: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
-        greetings: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
-        products: language === 'ur' ? 'products_ur' : 'products_en',
-        pricing: language === 'ur' ? 'pricing_ur' : 'pricing_en',
-        delivery: language === 'ur' ? 'delivery_ur' : 'delivery_en',
-        payment: language === 'ur' ? 'payment_ur' : 'payment_en',
-        support: language === 'ur' ? 'support_ur' : 'support_en',
-        positive: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
-        thanks: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
-        casual: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en'
-    };
-    
-    const responseKey = categoryMap[responseCategory] || (language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en');
+    // Always use natural conversations for variety
+    const responseKey = language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en';
     const responses = SMART_RESPONSES[responseKey];
     
-    // Get random response
-    const randomIndex = Math.floor(Math.random() * responses.length);
-    return responses[randomIndex];
+    if (!responses || responses.length === 0) {
+        return language === 'ur' ? 'Haan bhai, kya baat hai?' : 'Yeah, what\'s up?';
+    }
+    
+    // Get available responses (not recently used)
+    let availableResponses = responses.filter(response => !responseHistory.has(response));
+    
+    // If all responses used, clear history and use all responses
+    if (availableResponses.length === 0) {
+        responseHistory.clear();
+        localStorage.removeItem('lastChatResponses');
+        availableResponses = [...responses];
+    }
+    
+    // Get random response from available ones
+    const randomIndex = Math.floor(Math.random() * availableResponses.length);
+    const selectedResponse = availableResponses[randomIndex];
+    
+    // Add to history
+    responseHistory.add(selectedResponse);
+    
+    // Keep only last 20 responses in history to allow variety
+    const historyArray = Array.from(responseHistory);
+    if (historyArray.length > 20) {
+        responseHistory.clear();
+        historyArray.slice(-15).forEach(response => responseHistory.add(response));
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('lastChatResponses', JSON.stringify(Array.from(responseHistory)));
+    
+    console.log(`🎯 Selected response: ${selectedResponse.substring(0, 30)}...`);
+    return selectedResponse;
 }
 
 // Detect Language (Simple detection)
