@@ -763,18 +763,21 @@ document.addEventListener('touchend', (e) => {
 });
 
 function handleSwipe() {
-    const swipeThreshold = 50;
-    const diff = touchStartX - touchEndX;
+    // DISABLED: Swipe gestures disabled to prevent unwanted cart opening
+    // const swipeThreshold = 50;
+    // const diff = touchStartX - touchEndX;
     
-    if (Math.abs(diff) > swipeThreshold) {
-        if (diff > 0) {
-            // Swipe left - open cart
-            openCart();
-        } else {
-            // Swipe right - close cart
-            closeCart();
-        }
-    }
+    // if (Math.abs(diff) > swipeThreshold) {
+    //     if (diff > 0) {
+    //         // Swipe left - open cart
+    //         openCart();
+    //     } else {
+    //         // Swipe right - close cart
+    //         closeCart();
+    //     }
+    // }
+    
+    console.log('🚫 Swipe gestures disabled to prevent unwanted cart opening');
 }
 
 // Theme Toggle Function
