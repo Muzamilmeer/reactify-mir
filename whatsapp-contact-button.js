@@ -128,8 +128,7 @@ Looking forward to speaking with you!`;
     // Open WhatsApp
     window.open(whatsappUrl, '_blank');
     
-    // Show success notification
-    showContactNotification('📱 Opening WhatsApp to contact Muzamil directly!', 'success');
+    // Success notification removed - no more popup spam
     
     // Add confirmation message to chat
     if (typeof addMessageToChat === 'function') {

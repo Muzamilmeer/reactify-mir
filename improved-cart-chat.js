@@ -409,10 +409,7 @@ function setupImprovedCartChat() {
     overrideGlobalFunctions();
     addKeyboardShortcuts();
     
-    // Show success notification
-    setTimeout(() => {
-        showImprovedNotification('✅ Cart & Chat improved! Cart: Click-only | Chat: Minimize/Maximize/Close', 'success');
-    }, 2000);
+    // Success notification removed - no more popup spam
     
     console.log('✅ Improved Cart & Chat setup complete!');
 }

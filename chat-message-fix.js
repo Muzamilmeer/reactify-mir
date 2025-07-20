@@ -166,10 +166,7 @@ function setupChatMessageFix() {
     // Add welcome message
     addWelcomeMessage();
     
-    // Show success notification
-    setTimeout(() => {
-        showChatFixNotification('✅ Live Chat Messages Fixed! Type and press Enter or click Send.', 'success');
-    }, 3000);
+    // Success notification removed - no more popup spam
     
     console.log('✅ Chat message fix setup complete!');
 }

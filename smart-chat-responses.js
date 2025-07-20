@@ -467,18 +467,18 @@ function generateSmartResponse(userMessage) {
     // Map categories to response arrays
     const categoryMap = {
         natural: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
-        greetings: language === 'ur' ? 'greetings_ur' : 'greetings_en',
+        greetings: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
         products: language === 'ur' ? 'products_ur' : 'products_en',
         pricing: language === 'ur' ? 'pricing_ur' : 'pricing_en',
         delivery: language === 'ur' ? 'delivery_ur' : 'delivery_en',
         payment: language === 'ur' ? 'payment_ur' : 'payment_en',
         support: language === 'ur' ? 'support_ur' : 'support_en',
-        positive: language === 'ur' ? 'positive_ur' : 'positive_en',
-        thanks: language === 'ur' ? 'compliments_ur' : 'compliments_en',
-        casual: language === 'ur' ? 'casual_ur' : 'casual_en'
+        positive: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
+        thanks: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
+        casual: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en'
     };
     
-    const responseKey = categoryMap[responseCategory] || (language === 'ur' ? 'casual_ur' : 'casual_en');
+    const responseKey = categoryMap[responseCategory] || (language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en');
     const responses = SMART_RESPONSES[responseKey];
     
     // Get random response
@@ -625,15 +625,7 @@ if (!document.getElementById('chat-animations')) {
     document.head.appendChild(style);
 }
 
-// Initialize welcome message
-setTimeout(() => {
-    const welcomeMessages = [
-        "Hello! Welcome to ShopEasy! 🛍️ How can I help you today?",
-        "Assalam o Alaikum! ShopEasy mein aapka swagat hai! 🛍️ Kya madad kar sakta hun?"
-    ];
-    const randomWelcome = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
-    addBotMessage(randomWelcome);
-}, 2000);
+// Welcome message removed - handled by chat-message-fix.js
 
 console.log('✅ Smart Chat Responses Loaded!');
 console.log('🤖 300+ Natural Responses Available');
