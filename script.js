@@ -2118,18 +2118,11 @@ function sendMessage() {
     addMessage(message, 'user');
     chatInput.value = '';
     
-    // Send message to WhatsApp (if integration is enabled)
-    sendMessageToWhatsApp(message);
-    
     // Play send sound
     playSound('themeChange');
     
-    // Simulate typing delay and response
-    setTimeout(() => {
-        const response = getChatResponse(message);
-        addMessage(response, 'support');
-        playSound('addToCart');
-    }, 1000 + Math.random() * 1000);
+    // Note: Smart responses are now handled by smart-chat-responses.js
+    // No blocking responses or inappropriate word checking
 }
 
 // Send message to WhatsApp
@@ -2311,83 +2304,11 @@ function addMessage(text, sender) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// getChatResponse function removed - now handled by smart-chat-responses.js
+// This function is no longer used as smart responses are handled separately
 function getChatResponse(message) {
-    const lowerMessage = message.toLowerCase();
-    
-    // Check for inappropriate/violent words
-    const inappropriateWords = [
-        'stupid', 'idiot', 'fool', 'damn', 'hell', 'shit', 'fuck', 'bitch', 'bastard',
-        'asshole', 'moron', 'loser', 'hate', 'kill', 'die', 'murder', 'violence',
-        'fight', 'beat', 'punch', 'slap', 'kick', 'hurt', 'pain', 'blood',
-        'ugly', 'fat', 'disgusting', 'pathetic', 'worthless', 'useless',
-        'pagal', 'bewakoof', 'gadha', 'ullu', 'kamina', 'badtameez', 'ghatiya',
-        'kutta', 'saala', 'harami', 'randi', 'madarchod', 'bhenchod', 'chutiya',
-        'gaandu', 'bhosdike', 'laude', 'teri maa', 'bhosdi', 'randi', 'kutiya'
-    ];
-    
-    // Check if message contains inappropriate content
-    const containsInappropriate = inappropriateWords.some(word => 
-        lowerMessage.includes(word)
-    );
-    
-    if (containsInappropriate) {
-        violationCount++;
-        
-        // Play warning sound
-        playSound('wishlistRemove');
-        
-        if (violationCount === 1) {
-            showNotification('⚠️ Please use respectful language', 'error');
-            return "⚠️ Please maintain respectful language. I'm here to help you professionally. Let's keep our conversation positive and productive.";
-        } else if (violationCount === 2) {
-            showNotification('🚫 Second warning - Be respectful', 'error');
-            return "🚫 This is your second warning. I understand you might be frustrated, but please use appropriate language. I'm here to assist you with your shopping needs respectfully.";
-        } else if (violationCount >= 3) {
-            showNotification('🛑 Chat suspended due to inappropriate language', 'error');
-            
-            // Disable chat input temporarily
-            const chatInput = document.getElementById('chat-input');
-            const sendBtn = document.getElementById('send-btn');
-            if (chatInput && sendBtn) {
-                chatInput.disabled = true;
-                sendBtn.disabled = true;
-                chatInput.placeholder = "Chat suspended for 30 seconds...";
-                
-                setTimeout(() => {
-                    chatInput.disabled = false;
-                    sendBtn.disabled = false;
-                    chatInput.placeholder = "Type your message...";
-                    violationCount = 0; // Reset after timeout
-                }, 30000); // 30 seconds suspension
-            }
-            
-            return "🛑 CHAT SUSPENDED: Due to repeated inappropriate language, this chat is temporarily suspended for 30 seconds. Please use respectful communication. Contact WhatsApp +91 9103594759 for immediate assistance.";
-        }
-        
-        const warningResponses = [
-            "⚠️ Kindly use polite language. As a professional customer service, I request you to communicate respectfully. How can I help you properly?",
-            "⚠️ Let's maintain a professional conversation. I'm Muzamil, and I'm here to help you with excellent customer service. Please communicate respectfully."
-        ];
-        
-        return warningResponses[Math.floor(Math.random() * warningResponses.length)];
-    }
-    
-    // Check for specific responses
-    for (let key in chatResponses) {
-        if (lowerMessage.includes(key)) {
-            return chatResponses[key];
-        }
-    }
-    
-    // Default responses
-    const defaultResponses = [
-        "Thanks for your message! For immediate assistance, please contact me on WhatsApp at +91 9103594759.",
-        "I'd be happy to help! You can reach me directly on WhatsApp at +91 9103594759 for faster support.",
-        "Great question! For detailed help, please message me on WhatsApp at +91 9103594759.",
-        "I'm here to assist you! Feel free to contact me on WhatsApp at +91 9103594759 for quick support."
-    ];
-    
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    // This function is deprecated and replaced by smart-chat-responses.js
+    return "Smart responses are now active! 🤖";
 }
 
 // Initialize chat on page load
