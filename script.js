@@ -2118,6 +2118,9 @@ function sendMessage() {
     addMessage(message, 'user');
     chatInput.value = '';
     
+    // Send message to WhatsApp (if integration is enabled)
+    sendMessageToWhatsApp(message);
+    
     // Play send sound
     playSound('themeChange');
     
@@ -2127,6 +2130,128 @@ function sendMessage() {
         addMessage(response, 'support');
         playSound('addToCart');
     }, 1000 + Math.random() * 1000);
+}
+
+// Send message to WhatsApp
+async function sendMessageToWhatsApp(message) {
+    try {
+        // Check if WhatsApp integration is available
+        const whatsappEnabled = localStorage.getItem('whatsappIntegrationEnabled') === 'true';
+        const adminWhatsApp = localStorage.getItem('adminWhatsAppNumber') || 'YOUR_WHATSAPP_NUMBER';
+        
+        if (!whatsappEnabled) {
+            console.log('📱 WhatsApp integration not enabled');
+            return;
+        }
+        
+        // Get user info
+        const userName = localStorage.getItem('chatUserName') || 'Website Visitor';
+        const userEmail = localStorage.getItem('chatUserEmail') || 'Not provided';
+        const sessionId = localStorage.getItem('chatSessionId') || Date.now().toString();
+        
+        const whatsappMessage = `🛍️ *ShopEasy Live Chat Message*
+
+👤 *Customer:* ${userName}
+📧 *Email:* ${userEmail}
+🆔 *Session:* ${sessionId}
+🕒 *Time:* ${new Date().toLocaleString()}
+
+💬 *Message:*
+${message}
+
+_Sent from ShopEasy website live chat_
+_Reply to this message to respond to customer_`;
+        
+        // Send to admin WhatsApp
+        const response = await fetch('/api/send-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                to: adminWhatsApp,
+                message: whatsappMessage
+            })
+        });
+        
+        if (response.ok) {
+            console.log('📤 Message forwarded to WhatsApp successfully');
+            
+            // Add WhatsApp indicator to the message
+            setTimeout(() => {
+                const lastMessage = document.querySelector('.user-message:last-child');
+                if (lastMessage) {
+                    const whatsappIcon = document.createElement('div');
+                    whatsappIcon.innerHTML = '<i class="fab fa-whatsapp" style="color: #25D366; font-size: 12px; margin-top: 5px;" title="Forwarded to WhatsApp"></i>';
+                    lastMessage.querySelector('.message-content').appendChild(whatsappIcon);
+                }
+            }, 500);
+        } else {
+            console.log('❌ Failed to forward message to WhatsApp');
+        }
+        
+    } catch (error) {
+        console.log('📱 WhatsApp integration not available:', error.message);
+    }
+}
+
+// Check for new WhatsApp replies
+async function checkWhatsAppReplies() {
+    try {
+        const sessionId = localStorage.getItem('chatSessionId');
+        if (!sessionId) return;
+        
+        const response = await fetch('/api/messages');
+        const data = await response.json();
+        
+        if (data.success && data.messages.length > 0) {
+            const lastCheck = parseInt(localStorage.getItem('lastWhatsAppCheck') || '0');
+            
+            // Find new incoming WhatsApp messages
+            const newReplies = data.messages.filter(msg => 
+                msg.direction === 'incoming' && 
+                msg.source === 'whatsapp' && 
+                (msg.timestamp * 1000) > lastCheck &&
+                msg.message.includes('ShopEasy') // Only replies to our messages
+            );
+            
+            newReplies.forEach(msg => {
+                // Add WhatsApp reply to chat
+                const replyMessage = `📱 *Admin replied via WhatsApp:*\n\n${msg.message}`;
+                addMessage(replyMessage, 'whatsapp-reply');
+            });
+            
+            if (newReplies.length > 0) {
+                localStorage.setItem('lastWhatsAppCheck', Date.now().toString());
+                
+                // Show notification if chat is minimized
+                if (!chatOpen) {
+                    showChatNotification('New WhatsApp reply received!');
+                }
+                
+                // Play notification sound
+                playSound('addToCart');
+            }
+        }
+        
+    } catch (error) {
+        // Silently fail if WhatsApp integration not available
+        console.log('📱 WhatsApp check failed (integration not available)');
+    }
+}
+
+// Initialize WhatsApp integration
+function initializeWhatsAppIntegration() {
+    // Generate session ID for this chat session
+    if (!localStorage.getItem('chatSessionId')) {
+        localStorage.setItem('chatSessionId', 'chat_' + Date.now());
+    }
+    
+    // Check for WhatsApp replies every 30 seconds
+    setInterval(checkWhatsAppReplies, 30000);
+    
+    // Initial check
+    setTimeout(checkWhatsAppReplies, 5000);
 }
 
 function sendQuickReply(message) {
@@ -2152,6 +2277,17 @@ function addMessage(text, sender) {
         messageDiv.innerHTML = `
             <div class="message-avatar">
                 <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150&q=80" alt="User">
+            </div>
+            <div class="message-content">
+                <p>${text}</p>
+                <span class="message-time">${currentTime}</span>
+            </div>
+        `;
+    } else if (sender === 'whatsapp-reply') {
+        messageDiv.className = 'message whatsapp-message';
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <i class="fab fa-whatsapp" style="color: #25D366; font-size: 24px; background: #e8f5e8; padding: 8px; border-radius: 50%;"></i>
             </div>
             <div class="message-content">
                 <p>${text}</p>
@@ -2256,6 +2392,9 @@ function getChatResponse(message) {
 
 // Initialize chat on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize WhatsApp integration
+    initializeWhatsAppIntegration();
+    
     // Show chat notifications after 3 seconds
     setTimeout(() => {
         const notification = document.getElementById('chat-notification');
