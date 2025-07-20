@@ -4,7 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=0.5, minimum-scale=0.3, maximum-scale=2.0, user-scalable=yes">
     <title>ShopEasy - Premium Shopping Experience</title>
-    
+    <input type="text" placeholder="Search products..." id="search-input">
+                    </div>
+                    <div class="header-actions">
+                        <button class="lock-toggle-btn" id="lock-toggle-btn" onclick="toggleAppLock()" title="Lock/Unlock App">
+                            <i class="fas fa-lock"></i> Lock App
+                        </button>
+                        <div class="biometric-login" onclick="showBiometricLogin()" title="Biometric Login">
+                            <i class="fas fa-fingerprint"></i>
+                        </div>
+                        <!-- Lock App button REMOVED as per user request -->
+                        <!-- Biometric login button REMOVED as per user request -->
+                        <div class="theme-toggle" id="theme-toggle">
+                            <i class="fas fa-moon"></i>
+                        </div>
+@@ -474,27 +470,7 @@ <h4>Follow Us</h4>
+        </footer>
+    </div>
+
+    <!-- Unlock Overlay -->
+    <div id="unlock-overlay" class="unlock-overlay" style="display: none;">
+        <div class="unlock-content">
+            <div class="unlock-icon">
+                <i class="fas fa-lock" id="unlock-lock-icon"></i>
+            </div>
+            <h2>App Locked</h2>
+            <p id="unlock-message">Use your registered biometric to unlock</p>
+            
+            <div class="unlock-buttons">
+                <button class="unlock-btn primary" id="biometric-unlock-btn" onclick="attemptBiometricUnlock()">
+                    <i class="fas fa-fingerprint" id="unlock-btn-icon"></i>
+                    <span id="unlock-btn-text">Unlock with Biometric</span>
+                </button>
+            </div>
+            
+            <div class="unlock-status" id="unlock-status">
+                <span class="status-text">Ready to authenticate</span>
+            </div>
+        </div>
+    </div>
 
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
