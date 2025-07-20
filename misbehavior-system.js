@@ -6,23 +6,33 @@ let violationCount = parseInt(localStorage.getItem('chatViolationCount') || '0')
 let chatSuspended = localStorage.getItem('chatSuspended') === 'true';
 let suspensionEndTime = parseInt(localStorage.getItem('suspensionEndTime') || '0');
 
-// Inappropriate/Violent Words Database
+// Inappropriate/Violent Words Database - COMPREHENSIVE
 const INAPPROPRIATE_WORDS = [
     // English inappropriate words
     'stupid', 'idiot', 'fool', 'damn', 'hell', 'shit', 'fuck', 'bitch', 'bastard',
     'asshole', 'moron', 'loser', 'hate', 'kill', 'die', 'murder', 'violence',
     'fight', 'beat', 'punch', 'slap', 'kick', 'hurt', 'pain', 'blood',
     'ugly', 'fat', 'disgusting', 'pathetic', 'worthless', 'useless',
+    'dumb', 'retard', 'psycho', 'crazy', 'insane', 'mental', 'sick',
+    'trash', 'garbage', 'waste', 'scum', 'pig', 'dog', 'animal',
     
     // Urdu inappropriate words
     'pagal', 'bewakoof', 'gadha', 'ullu', 'kamina', 'badtameez', 'ghatiya',
     'kutta', 'saala', 'harami', 'randi', 'madarchod', 'bhenchod', 'chutiya',
     'gaandu', 'bhosdike', 'laude', 'teri maa', 'bhosdi', 'kutiya', 'kutti',
     'badmash', 'zaleel', 'neech', 'ganda', 'gandagi', 'napak', 'haram',
+    'jahannum', 'shaitan', 'iblis', 'kafir', 'munafiq', 'fasiq', 'fajir',
+    'badkaar', 'gunehgar', 'khabees', 'paleed', 'makruh', 'manhoos',
     
     // Violence related words
     'mar', 'maar', 'marna', 'marunga', 'qatal', 'jaan', 'maut', 'khoon',
-    'ladai', 'jhagra', 'dhamki', 'threat', 'warning', 'revenge', 'badla'
+    'ladai', 'jhagra', 'dhamki', 'threat', 'warning', 'revenge', 'badla',
+    'torture', 'abuse', 'attack', 'assault', 'destroy', 'crush', 'smash',
+    'break', 'damage', 'harm', 'injure', 'wound', 'cut', 'stab', 'shoot',
+    
+    // Additional inappropriate terms
+    'sex', 'porn', 'nude', 'naked', 'breast', 'penis', 'vagina', 'orgasm',
+    'masturbate', 'rape', 'molest', 'harassment', 'abuse', 'pervert'
 ];
 
 // Check if chat is currently suspended
@@ -55,7 +65,7 @@ function checkMessageContent(message) {
     return containsInappropriate;
 }
 
-// Handle violation
+// Handle violation with proper alert warnings
 function handleViolation(message) {
     violationCount++;
     localStorage.setItem('chatViolationCount', violationCount.toString());
@@ -70,17 +80,20 @@ function handleViolation(message) {
     let warningMessage = '';
     
     if (violationCount === 1) {
-        // First warning
+        // First warning with alert
+        alert('⚠️ WARNING 1/3: Please use respectful language!\n\nInappropriate words detected. This is your first warning.\n\nAfter 3 warnings, chat will be suspended for 5 minutes.');
         showViolationNotification('⚠️ First Warning - Please use respectful language', 'warning');
-        warningMessage = "⚠️ **FIRST WARNING** ⚠️\n\nPlease maintain respectful language. I'm here to help you professionally. Let's keep our conversation positive and productive.\n\n*This is warning 1 of 3. After 3 warnings, chat will be suspended for 5 minutes.*";
+        warningMessage = "⚠️ **FIRST WARNING (1/3)** ⚠️\n\nPlease maintain respectful language. I'm here to help you professionally.\n\n*After 3 warnings, chat will be suspended for 5 minutes.*";
         
     } else if (violationCount === 2) {
-        // Second warning
+        // Second warning with alert
+        alert('🚫 WARNING 2/3: Final warning before suspension!\n\nThis is your second warning for inappropriate language.\n\nOne more violation will suspend chat for 5 minutes.');
         showViolationNotification('🚫 Second Warning - Be respectful!', 'warning');
-        warningMessage = "🚫 **SECOND WARNING** 🚫\n\nThis is your second warning. I understand you might be frustrated, but please use appropriate language. I'm here to assist you with your shopping needs respectfully.\n\n*This is warning 2 of 3. One more violation will result in 5-minute chat suspension.*";
+        warningMessage = "🚫 **SECOND WARNING (2/3)** 🚫\n\nThis is your second warning. Please use appropriate language.\n\n*One more violation will result in 5-minute chat suspension.*";
         
     } else if (violationCount >= 3) {
-        // Third warning - Suspend chat for 5 minutes
+        // Third warning with alert - Suspend chat for 5 minutes
+        alert('🛑 CHAT SUSPENDED FOR 5 MINUTES!\n\nDue to repeated inappropriate language (3 warnings), chat is now suspended.\n\nYou can contact via WhatsApp: +91 9103594759');
         suspendChat();
         return "🛑 **CHAT SUSPENDED FOR 5 MINUTES** 🛑\n\nDue to repeated inappropriate language, this chat is suspended for 5 minutes. Please use respectful communication.\n\n⏰ **Suspension Time:** 5 minutes\n📞 **Alternative Contact:** WhatsApp +91 9103594759\n\n*Chat will automatically resume after 5 minutes.*";
     }
