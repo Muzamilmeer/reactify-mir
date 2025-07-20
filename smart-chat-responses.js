@@ -3,6 +3,114 @@ console.log('🤖 Loading Smart Chat Responses...');
 
 // 300+ Natural Responses Database (English + Urdu)
 const SMART_RESPONSES = {
+    // Natural Conversations (English)
+    natural_conversations_en: [
+        "I'm fine, thanks! And you?",
+        "Nothing much, just relaxing.",
+        "Pretty good so far. Yours?",
+        "Morning! Slept well?",
+        "Yeah, I've missed you!",
+        "Not much, just the usual.",
+        "Yes, I've got some time.",
+        "It was fun and relaxing.",
+        "A little tired, but fine.",
+        "Yeah, it's a good day!",
+        "Sure! What do you need?",
+        "Of course, tell me everything.",
+        "Yeah, I'll join you.",
+        "No problem, here you go.",
+        "Yes, you can use mine.",
+        "Definitely. Let's go through it.",
+        "Wait, I'll help you find the way.",
+        "Sure, I've got some time.",
+        "Yes, just send me your location.",
+        "I'll see what I can do.",
+        "I'm here for you. Talk to me.",
+        "Don't worry, you'll do great!",
+        "That's amazing! Tell me why!",
+        "You can always talk to me.",
+        "Calm down. What happened?",
+        "It's okay. I'm with you.",
+        "Take a deep breath. You've got this.",
+        "That's good to hear!",
+        "Yes, you can. Don't give up.",
+        "Let's do something fun then!",
+        "Let's grab something to eat.",
+        "Yes! I'm craving it.",
+        "I haven't decided yet.",
+        "I'm in! Where to?",
+        "I'll have coffee, please.",
+        "Yum! I love it.",
+        "You should eat something.",
+        "Yeah, a bit too much!",
+        "Sure! What do you want?",
+        "Great idea! I know a place.",
+        "Yes, after 4 PM.",
+        "I'd love to! What time?",
+        "Just chilling at home.",
+        "Yes! Let's do it.",
+        "I'm ready! Let's go.",
+        "How about this evening?",
+        "Sure! Let's meet at 1 PM.",
+        "Yeah, I'll be there soon.",
+        "Sounds relaxing, let's do it.",
+        "That sounds exciting!"
+    ],
+
+    // Natural Conversations (Urdu)
+    natural_conversations_ur: [
+        "Wa Alaikum Assalam, main theek hoon. Tum sunao?",
+        "Kuch khaas nahi, bas relax kar raha hoon.",
+        "Acha guzra, tumhara?",
+        "Subah bakhair, umeed hai achi neend aayi hogi.",
+        "Haan yaar, bohot waqt ho gaya.",
+        "Wahi purana routine.",
+        "Haan, thoda free hoon.",
+        "Bohot acha, tumhara kaisa tha?",
+        "Thodi si thakan hai bas.",
+        "Haan, aaj sab kuch theek chal raha hai.",
+        "Haan bilkul, kya karna hai?",
+        "Zaroor, batayein.",
+        "Haan, chalo chalte hain.",
+        "Haan lo, yeh lo.",
+        "Haan, use kar lo.",
+        "Zaroor, aao samjhata hoon.",
+        "Ruko, main madad karta hoon.",
+        "Haan, koi masla nahi.",
+        "Location bhej do, aa raha hoon.",
+        "Dekhta hoon kya kar sakta hoon.",
+        "Main hoon na, baat karo.",
+        "Chinta mat karo, sab theek ho ga.",
+        "Wah, acha sun kar acha laga!",
+        "Main hamesha yahan hoon.",
+        "Aram se, kya hua?",
+        "Main hoon tumhare saath.",
+        "Gehri saans lo, sab theek ho ga.",
+        "Alhamdulillah!",
+        "Hoga, tum kar sakte ho.",
+        "Chalo kuch interesting karte hain.",
+        "Chalo kuch khate hain.",
+        "Haan! Bohot din ho gaye.",
+        "Abhi decide nahi kiya.",
+        "Zaroor, kahan chalna hai?",
+        "Coffee please.",
+        "Waqai, bohot acha hai.",
+        "Chalo kuch le lete hain.",
+        "Haan, zyada hi hai.",
+        "Haan chalo mil ke banate hain.",
+        "Great idea!",
+        "Haan, 4 baje ke baad.",
+        "Chalo milte hain!",
+        "Ghar par araam.",
+        "Haan bhai! Popcorn ready!",
+        "Tayyar hoon!",
+        "Shaam ko chalein?",
+        "1 baje milte hain.",
+        "Haan, aata hoon.",
+        "Haan, acha idea hai.",
+        "Wah! Bohot acha idea hai."
+    ],
+
     // Greetings & Welcome (English)
     greetings_en: [
         "Hello! Welcome to ShopEasy! How can I help you today?",
@@ -314,6 +422,9 @@ const SMART_RESPONSES = {
 
 // Keyword Detection for Smart Responses
 const KEYWORD_MAPPING = {
+    // Natural conversations
+    natural: ['how are you', 'kaise ho', 'whats going on', 'kya chal raha', 'good morning', 'subah bakhair', 'long time', 'kitne din', 'are you free', 'fursat hai', 'help me', 'madad karo', 'come with me', 'mere saath', 'borrow', 'udhar', 'explain', 'samjhao', 'im lost', 'raasta bhool', 'pick me up', 'lift chahiye', 'im sad', 'udas hoon', 'im happy', 'khush hoon', 'im scared', 'dar lag raha', 'im hungry', 'bhukh lagi', 'want to order', 'order karna', 'lets go out', 'bahar chalte', 'movie night', 'film dekhte', 'shopping', 'weekend plans', 'lets meet', 'milte hain'],
+    
     // Greetings
     greetings: ['hello', 'hi', 'hey', 'salam', 'namaste', 'good morning', 'good evening', 'assalam', 'adab'],
     
@@ -355,6 +466,7 @@ function generateSmartResponse(userMessage) {
     
     // Map categories to response arrays
     const categoryMap = {
+        natural: language === 'ur' ? 'natural_conversations_ur' : 'natural_conversations_en',
         greetings: language === 'ur' ? 'greetings_ur' : 'greetings_en',
         products: language === 'ur' ? 'products_ur' : 'products_en',
         pricing: language === 'ur' ? 'pricing_ur' : 'pricing_en',
