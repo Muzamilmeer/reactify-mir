@@ -749,10 +749,12 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Add touch gestures for mobile
+// Add touch gestures for mobile (DISABLED - was causing random cart opening)
 let touchStartX = 0;
 let touchEndX = 0;
 
+// COMMENTED OUT - Touch gestures were opening cart randomly
+/*
 document.addEventListener('touchstart', (e) => {
     touchStartX = e.changedTouches[0].screenX;
 });
@@ -776,6 +778,7 @@ function handleSwipe() {
         }
     }
 }
+*/
 
 // Theme Toggle Function
 function toggleTheme() {
