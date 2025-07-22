@@ -2147,35 +2147,12 @@ body {
     margin-right: 5px;
 }
 
-/* Chat Control Buttons */
-.chat-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.chat-toggle i {
+    transition: transform 0.3s ease;
 }
 
-.chat-control-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    font-size: 14px;
-}
-
-.chat-control-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
-.chat-control-btn:active {
-    transform: scale(0.95);
+.chat-widget.minimized .chat-toggle i {
+    transform: rotate(180deg);
 }
 
 .chat-body {

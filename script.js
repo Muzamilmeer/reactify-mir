@@ -2084,43 +2084,31 @@ function openChat() {
     playSound('themeChange');
 }
 
-// Simple Chat Control Functions
-function minimizeChat() {
-    const chatWidget = document.getElementById('chat-widget');
-    const chatFloatBtn = document.getElementById('chat-float-btn');
-    
-    // Minimize = Close chat completely (like before)
-    chatWidget.style.display = 'none';
-    chatWidget.classList.remove('open', 'minimized');
-    
-    // Show floating button if exists
-    if (chatFloatBtn) {
-        chatFloatBtn.style.display = 'block';
-    }
-    
-    chatOpen = false;
-    playSound('themeChange');
-}
-
-function maximizeChat() {
-    // Same as openChat - open the chat
-    openChat();
-}
-
-function closeChat() {
-    // Same as minimize - close chat completely
-    minimizeChat();
-}
-
-// Legacy function for backward compatibility
 function toggleChat() {
     const chatWidget = document.getElementById('chat-widget');
+    const chatBody = document.getElementById('chat-body');
+    const chatToggleIcon = document.getElementById('chat-toggle-icon');
     
     if (chatWidget.classList.contains('minimized')) {
-        maximizeChat();
+        // Expand
+        chatWidget.classList.remove('minimized');
+        chatBody.style.display = 'flex';
+        if (chatToggleIcon) {
+            chatToggleIcon.className = 'fas fa-chevron-up';
+        }
+        chatOpen = true;
     } else {
-        minimizeChat();
+        // Minimize (but keep widget available)
+        chatWidget.classList.add('minimized');
+        chatBody.style.display = 'none';
+        if (chatToggleIcon) {
+            chatToggleIcon.className = 'fas fa-chevron-down';
+        }
+        // Don't hide the widget completely - keep it minimized
+        chatOpen = false;
     }
+    
+    playSound('themeChange');
 }
 
 function sendMessage() {
@@ -2949,9 +2937,6 @@ window.resetAppSecurity = resetAppSecurity;
 window.contactSupport = contactSupport;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
-window.minimizeChat = minimizeChat;
-window.maximizeChat = maximizeChat;
-window.closeChat = closeChat;
 window.sendMessage = sendMessage;
 window.sendQuickReply = sendQuickReply;
 
