@@ -1213,6 +1213,14 @@ function getLiveLocation() {
         androidInterface: !!window.Android
     });
     
+    // Debug: Show detection results to user
+    console.log('📱 Environment Detection:', {
+        'Android App': isAndroidApp,
+        'WebView': isWebView,
+        'Geolocation Available': hasGeolocation,
+        'Secure Context': isSecureContext
+    });
+    
     if (!hasGeolocation) {
         locationStatus.innerHTML = `
             <div style="color: #e74c3c; margin: 10px 0;">
@@ -1246,7 +1254,14 @@ function getLiveLocation() {
         return;
     }
     
-    locationStatus.textContent = '📍 Requesting location permission...';
+    locationStatus.innerHTML = `
+        <div style="text-align: center; margin: 10px 0;">
+            <div>📍 Requesting location permission...</div>
+            <small style="color: #666; display: block; margin-top: 5px;">
+                Environment: ${isAndroidApp ? 'Android App' : isWebView ? 'WebView' : 'Browser'}
+            </small>
+        </div>
+    `;
     
     // For Android apps, directly request location (like native apps)
     if (isAndroidApp || isWebView) {
@@ -1290,7 +1305,14 @@ function getLiveLocation() {
 
 // Request location directly (like native apps)
 function requestLocationDirectly(locationStatus, isAndroidApp, isWebView) {
-    locationStatus.textContent = '📍 Getting location...';
+    locationStatus.innerHTML = `
+        <div style="text-align: center; margin: 10px 0;">
+            <div>📍 Getting location...</div>
+            <small style="color: #666;">Requesting GPS access...</small>
+        </div>
+    `;
+    
+    console.log('🚀 Making geolocation request...');
     
     navigator.geolocation.getCurrentPosition(
         function(position) {
@@ -1317,6 +1339,16 @@ function requestLocationDirectly(locationStatus, isAndroidApp, isWebView) {
                     
                     playSound('addToCart');
                     console.log('✅ Location and address captured successfully');
+                    
+                    // Show success message to user
+                    setTimeout(() => {
+                        locationStatus.innerHTML = `
+                            <div style="color: #27ae60; text-align: center; margin: 10px 0;">
+                                <strong>✅ Location Set Successfully!</strong><br>
+                                <small style="color: #666;">${address}</small>
+                            </div>
+                        `;
+                    }, 500);
                 })
                 .catch(error => {
                     console.error('Address lookup failed:', error);
@@ -1346,8 +1378,11 @@ function requestLocationDirectly(locationStatus, isAndroidApp, isWebView) {
                             <div style="color: #e74c3c; margin: 10px 0; text-align: center;">
                                 <strong>📍 Location Permission Required</strong><br>
                                 <small style="color: #666;">Allow location access in settings</small><br>
+                                <button onclick="getLiveLocation()" style="margin: 8px 5px 0 0; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    🔄 Try Again
+                                </button>
                                 <button onclick="useManualLocation()" style="margin-top: 8px; padding: 8px 15px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                                    📝 Enter Address Manually
+                                    📝 Manual Entry
                                 </button>
                             </div>
                         `;
@@ -1547,6 +1582,60 @@ function closeLocationHelp() {
         document.body.removeChild(window.locationHelpModal);
         window.locationHelpModal = null;
     }
+}
+
+// Debug function for testing location permission
+function testLocationPermission() {
+    console.log('🧪 Testing location permission...');
+    
+    if ('geolocation' in navigator) {
+        console.log('✅ Geolocation API available');
+        
+        // Test permission state
+        if ('permissions' in navigator) {
+            navigator.permissions.query({name: 'geolocation'}).then(function(result) {
+                console.log('🔍 Permission state:', result.state);
+                console.log('🔍 Permission change handler available:', typeof result.onchange);
+            }).catch(function(error) {
+                console.warn('❌ Permission query failed:', error);
+            });
+        }
+        
+        // Direct test
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                console.log('✅ TEST SUCCESS: Location received', {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                });
+            },
+            function(error) {
+                console.error('❌ TEST FAILED: Location error', {
+                    code: error.code,
+                    message: error.message
+                });
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        console.error('❌ Geolocation API not available');
+    }
+}
+
+// Add test button to page (temporary)
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    setTimeout(() => {
+        const testBtn = document.createElement('button');
+        testBtn.textContent = '🧪 Test Location';
+        testBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: red; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;';
+        testBtn.onclick = testLocationPermission;
+        document.body.appendChild(testBtn);
+    }, 1000);
 }
 
 // Removed Android help modal - using native permission flow instead
