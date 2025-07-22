@@ -1427,13 +1427,14 @@ function requestLocationDirectly(locationStatus, isAndroidApp, isWebView) {
                     if (isAndroidApp || isWebView) {
                         locationStatus.innerHTML = `
                             <div style="color: #f39c12; margin: 10px 0; text-align: center;">
-                                <strong>⏱️ GPS Timeout</strong><br>
-                                <small style="color: #666;">Location taking too long</small><br>
+                                <strong>⏱️ GPS Taking Too Long</strong><br>
+                                <small style="color: #666;">Location request timeout (5 seconds)</small><br>
+                                <small style="color: #999;">Try moving to better signal area</small><br>
                                 <button onclick="getLiveLocation()" style="margin: 8px 5px 0 0; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
                                     🔄 Try Again
                                 </button>
                                 <button onclick="useManualLocation()" style="margin-top: 8px; padding: 8px 15px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                                    📝 Manual
+                                    📝 Manual Entry
                                 </button>
                             </div>
                         `;
@@ -1441,7 +1442,7 @@ function requestLocationDirectly(locationStatus, isAndroidApp, isWebView) {
                         locationStatus.innerHTML = `
                             <div style="color: #f39c12; margin: 10px 0;">
                                 <strong>⏱️ Location Request Timed Out</strong><br>
-                                <small style="color: #666;">GPS signal taking too long</small><br>
+                                <small style="color: #666;">GPS signal taking too long (8 seconds)</small><br>
                                 <small style="color: #666;">• Try again in better signal area</small><br>
                                 <small style="color: #666;">• Or use manual address entry</small><br>
                                 <button onclick="getLiveLocation()" style="margin: 8px 5px 0 0; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
@@ -1468,9 +1469,9 @@ function requestLocationDirectly(locationStatus, isAndroidApp, isWebView) {
             });
         },
         {
-            enableHighAccuracy: isAndroidApp || isWebView ? true : true,
-            timeout: isAndroidApp || isWebView ? 10000 : 15000,
-            maximumAge: isAndroidApp || isWebView ? 60000 : 300000
+            enableHighAccuracy: isAndroidApp || isWebView ? false : true,
+            timeout: isAndroidApp || isWebView ? 5000 : 8000,
+            maximumAge: isAndroidApp || isWebView ? 30000 : 60000
         }
     );
 }
@@ -1651,9 +1652,9 @@ function testLocationPermission() {
                 });
             },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 30000
             }
         );
     } else {
@@ -1898,9 +1899,9 @@ function tryAndroidLocation() {
             `;
         },
         {
-            enableHighAccuracy: true,
-            timeout: 8000,
-            maximumAge: 0
+            enableHighAccuracy: false,
+            timeout: 4000,
+            maximumAge: 30000
         }
     );
 }
