@@ -754,27 +754,42 @@ document.addEventListener('mousemove', (e) => {
 
 // Add keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-    // Ctrl/Cmd + K to focus search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('search-input').focus();
-    }
+    // Check if form is visible
+    const userForm = document.getElementById('user-details-form');
+    const paymentOptions = document.getElementById('payment-options');
+    const formVisible = userForm && userForm.style.display !== 'none';
+    const paymentVisible = paymentOptions && paymentOptions.style.display !== 'none';
     
-    // Escape to close cart (but not during form/payment)
-    if (e.key === 'Escape') {
-        // Don't close cart if form or payment options are visible
-        const userForm = document.getElementById('user-details-form');
-        const paymentOptions = document.getElementById('payment-options');
-        
-        const formVisible = userForm && userForm.style.display !== 'none';
-        const paymentVisible = paymentOptions && paymentOptions.style.display !== 'none';
-        
-        if (formVisible || paymentVisible) {
-            console.log('🛒 ESC pressed but form/payment visible - not closing cart');
+    // If form is visible, prevent ANY keyboard shortcuts that might close cart
+    if (formVisible || paymentVisible) {
+        // Allow normal typing but prevent cart-closing shortcuts
+        if (e.key === 'Escape' || (e.ctrlKey && e.key === 'w') || (e.metaKey && e.key === 'w')) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🛒 Keyboard shortcut blocked during form - preventing cart close');
             return;
         }
         
-        closeCart();
+        // For Ctrl/Cmd + K, also prevent if form is visible
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🛒 Search shortcut blocked during form');
+            return;
+        }
+    } else {
+        // Normal behavior when form not visible
+        
+        // Ctrl/Cmd + K to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            document.getElementById('search-input').focus();
+        }
+        
+        // Escape to close cart
+        if (e.key === 'Escape') {
+            closeCart();
+        }
     }
 });
 
@@ -1002,6 +1017,29 @@ function showPaymentOptions() {
     playSound('themeChange');
     // showNotification('📝 Please fill your details to continue', 'info'); // Removed popup
     
+    // Add mobile viewport protection
+    const originalViewportHeight = window.innerHeight;
+    
+    // Monitor viewport changes (mobile keyboard)
+    window.addEventListener('resize', function() {
+        const currentHeight = window.innerHeight;
+        const heightDiff = originalViewportHeight - currentHeight;
+        
+        // If height reduced significantly (keyboard opened)
+        if (heightDiff > 150) {
+            console.log('🛒 Mobile keyboard opened - ensuring cart stays open');
+            
+            // Force cart to stay open
+            const cartSidebar = document.getElementById('cart-sidebar');
+            const cartOverlay = document.getElementById('cart-overlay');
+            if (cartSidebar && !cartSidebar.classList.contains('open')) {
+                cartSidebar.classList.add('open');
+                cartOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+    });
+    
     // Prevent form clicks from closing cart
     setTimeout(() => {
         // Protect form containers
@@ -1022,12 +1060,53 @@ function showPaymentOptions() {
             });
         }
         
-        // Protect individual form elements
+        // Protect individual form elements with ALL events
         const formElements = document.querySelectorAll('#user-details-form input, #user-details-form textarea, #user-details-form button, #payment-options button');
         formElements.forEach(element => {
+            // Protect against click events
             element.addEventListener('click', function(e) {
-                e.stopPropagation(); // Prevent click from bubbling to overlay
+                e.stopPropagation();
                 console.log('🛒 Form element clicked - preventing cart close');
+            });
+            
+            // Protect against focus events (when user starts typing)
+            element.addEventListener('focus', function(e) {
+                e.stopPropagation();
+                console.log('🛒 Form element focused - preventing cart close');
+                
+                // Extra protection: force cart to stay open
+                const cartSidebar = document.getElementById('cart-sidebar');
+                const cartOverlay = document.getElementById('cart-overlay');
+                if (cartSidebar && !cartSidebar.classList.contains('open')) {
+                    cartSidebar.classList.add('open');
+                    cartOverlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    console.log('🛒 Force-opened cart during input focus');
+                }
+            });
+            
+            // Protect against input events (when user types)
+            element.addEventListener('input', function(e) {
+                e.stopPropagation();
+                console.log('🛒 Form element input - preventing cart close');
+            });
+            
+            // Protect against blur events (when user leaves input)
+            element.addEventListener('blur', function(e) {
+                e.stopPropagation();
+                console.log('🛒 Form element blur - preventing cart close');
+            });
+            
+            // Protect against keydown events
+            element.addEventListener('keydown', function(e) {
+                e.stopPropagation();
+                console.log('🛒 Form element keydown - preventing cart close');
+            });
+            
+            // Protect against keyup events
+            element.addEventListener('keyup', function(e) {
+                e.stopPropagation();
+                console.log('🛒 Form element keyup - preventing cart close');
             });
         });
         
@@ -1040,6 +1119,27 @@ function showPaymentOptions() {
                 console.log('🛒 Cart sidebar clicked - preventing overlay close');
             });
         }
+        
+        // Add cart state monitor to detect unexpected closing
+        const cartStateMonitor = setInterval(() => {
+            const cartSidebar = document.getElementById('cart-sidebar');
+            const userForm = document.getElementById('user-details-form');
+            const paymentOptions = document.getElementById('payment-options');
+            
+            const formVisible = userForm && userForm.style.display !== 'none';
+            const paymentVisible = paymentOptions && paymentOptions.style.display !== 'none';
+            
+            // If form/payment is visible but cart is closed, force it open
+            if ((formVisible || paymentVisible) && cartSidebar && !cartSidebar.classList.contains('open')) {
+                console.log('🛒 DETECTED: Cart closed while form visible - reopening!');
+                cartSidebar.classList.add('open');
+                document.getElementById('cart-overlay').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }, 500); // Check every 500ms
+        
+        // Store monitor reference to clear later
+        window.cartStateMonitor = cartStateMonitor;
     }, 100);
 }
 
@@ -1862,6 +1962,13 @@ function completePayment(paymentMethod, paymentStatus = 'success', transactionId
         cart = [];
         updateCartUI();
         closeCart();
+        
+        // Clear cart state monitor on successful payment
+        if (window.cartStateMonitor) {
+            clearInterval(window.cartStateMonitor);
+            window.cartStateMonitor = null;
+            console.log('🛒 Cart state monitor cleared on successful payment');
+        }
     } else {
         // Keep cart open for failed payments so user can try again
         console.log('Payment failed - keeping cart open for retry');
