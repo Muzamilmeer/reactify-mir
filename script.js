@@ -1263,10 +1263,10 @@ function getLiveLocation() {
         </div>
     `;
     
-    // For Android apps, directly request location (like native apps)
+    // For Android apps, check and request permissions first
     if (isAndroidApp || isWebView) {
-        console.log('📱 Android app detected - requesting location directly');
-        requestLocationDirectly(locationStatus, isAndroidApp, isWebView);
+        console.log('📱 Android app detected - checking permissions first');
+        requestAndroidLocationPermission(locationStatus);
         return;
     }
     
@@ -1636,6 +1636,124 @@ if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
         testBtn.onclick = testLocationPermission;
         document.body.appendChild(testBtn);
     }, 1000);
+}
+
+// Android permission request function
+function requestAndroidLocationPermission(locationStatus) {
+    console.log('📱 Requesting Android location permission...');
+    
+    // Check if cordova/phonegap permissions plugin is available
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.permissions) {
+        console.log('📱 Cordova permissions plugin found');
+        
+        const permissions = window.cordova.plugins.permissions;
+        
+        // Check current permission status
+        permissions.checkPermission(permissions.ACCESS_FINE_LOCATION, function(status) {
+            console.log('📱 Permission status:', status);
+            
+            if (status.hasPermission) {
+                console.log('✅ Location permission already granted');
+                requestLocationDirectly(locationStatus, true, true);
+            } else {
+                console.log('🔒 Requesting location permission...');
+                
+                // Request permission
+                permissions.requestPermission(permissions.ACCESS_FINE_LOCATION, function(status) {
+                    if (status.hasPermission) {
+                        console.log('✅ Location permission granted by user');
+                        requestLocationDirectly(locationStatus, true, true);
+                    } else {
+                        console.log('❌ Location permission denied by user');
+                        showAndroidPermissionDenied(locationStatus);
+                    }
+                }, function(error) {
+                    console.error('❌ Permission request error:', error);
+                    showAndroidPermissionError(locationStatus);
+                });
+            }
+        }, function(error) {
+            console.error('❌ Permission check error:', error);
+            // Fallback to direct request
+            requestLocationDirectly(locationStatus, true, true);
+        });
+        
+    } else if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
+        // iOS 13+ style permission request (if applicable)
+        console.log('📱 iOS style permission request');
+        requestLocationDirectly(locationStatus, true, true);
+        
+    } else {
+        // Fallback to direct geolocation request
+        console.log('📱 No permission plugin - direct geolocation request');
+        requestLocationDirectly(locationStatus, true, true);
+    }
+}
+
+// Show Android permission denied message
+function showAndroidPermissionDenied(locationStatus) {
+    locationStatus.innerHTML = `
+        <div style="color: #e74c3c; margin: 10px 0; text-align: center;">
+            <strong>📱 Location Permission Required</strong><br>
+            <small style="color: #666;">Enable location in Android settings</small><br>
+            <button onclick="openAndroidSettings()" style="margin: 8px 5px 0 0; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                ⚙️ Open Settings
+            </button>
+            <button onclick="useManualLocation()" style="margin-top: 8px; padding: 8px 15px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                📝 Manual Entry
+            </button>
+        </div>
+    `;
+}
+
+// Show Android permission error message
+function showAndroidPermissionError(locationStatus) {
+    locationStatus.innerHTML = `
+        <div style="color: #f39c12; margin: 10px 0; text-align: center;">
+            <strong>⚠️ Permission System Error</strong><br>
+            <small style="color: #666;">Unable to request permission</small><br>
+            <button onclick="requestAndroidLocationPermission(document.getElementById('location-status'))" style="margin: 8px 5px 0 0; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                🔄 Try Again
+            </button>
+            <button onclick="useManualLocation()" style="margin-top: 8px; padding: 8px 15px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                📝 Manual Entry
+            </button>
+        </div>
+    `;
+}
+
+// Open Android settings (if possible)
+function openAndroidSettings() {
+    console.log('📱 Attempting to open Android settings...');
+    
+    // Try Cordova plugin method
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.settings) {
+        window.cordova.plugins.settings.open('application_details', function() {
+            console.log('✅ Settings opened successfully');
+        }, function(error) {
+            console.error('❌ Failed to open settings:', error);
+            showManualSettingsInstructions();
+        });
+    } else if (window.plugins && window.plugins.intentShim) {
+        // Alternative method
+        window.plugins.intentShim.startActivity({
+            action: 'android.settings.APPLICATION_DETAILS_SETTINGS',
+            url: 'package:com.shopeasy.app'
+        }, function() {
+            console.log('✅ Settings opened via intent');
+        }, function(error) {
+            console.error('❌ Intent failed:', error);
+            showManualSettingsInstructions();
+        });
+    } else {
+        console.warn('⚠️ No settings plugin available');
+        showManualSettingsInstructions();
+    }
+}
+
+// Show manual settings instructions
+function showManualSettingsInstructions() {
+    alert('Go to:\nAndroid Settings → Apps → ShopEasy → Permissions → Location\n\nThen enable location permission and restart the app.');
 }
 
 // Removed Android help modal - using native permission flow instead
