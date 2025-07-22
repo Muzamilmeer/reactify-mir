@@ -382,6 +382,13 @@ function initializeEventListeners() {
         // If form or payment is visible, don't close cart on overlay click
         if (formVisible || paymentVisible) {
             console.log('🛒 Cart overlay clicked but form/payment visible - not closing cart');
+            
+            // EXTRA PROTECTION: Force cart to stay open even if overlay clicked
+            const cartSidebar = document.getElementById('cart-sidebar');
+            if (cartSidebar && !cartSidebar.classList.contains('open')) {
+                cartSidebar.classList.add('open');
+                console.log('🛒 FORCE: Re-opened cart after overlay click during form');
+            }
             return;
         }
         
@@ -1008,6 +1015,36 @@ function showPaymentOptions() {
         userDetailsForm.style.display = 'block';
         checkoutBtn.style.display = 'none';
         console.log('✅ User details form shown successfully!');
+        
+        // CRITICAL: Force cart to stay open when form is shown (square box design protection)
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
+        
+        if (cartSidebar) {
+            cartSidebar.classList.add('open');
+            console.log('🛒 FORCE: Cart locked open for form filling');
+        }
+        if (cartOverlay) {
+            cartOverlay.classList.add('active');
+            console.log('🛒 FORCE: Overlay locked active for form');
+        }
+        document.body.style.overflow = 'hidden';
+        
+        // Triple-check with multiple timeouts for square box design
+        setTimeout(() => {
+            if (cartSidebar && !cartSidebar.classList.contains('open')) {
+                cartSidebar.classList.add('open');
+                console.log('🛒 BACKUP-1: Re-opened cart after 100ms');
+            }
+        }, 100);
+        
+        setTimeout(() => {
+            if (cartSidebar && !cartSidebar.classList.contains('open')) {
+                cartSidebar.classList.add('open');
+                console.log('🛒 BACKUP-2: Re-opened cart after 300ms');
+            }
+        }, 300);
+        
     } else {
         console.error('❌ User details form or checkout button not found!');
         showNotification('❌ Form system error! Please try again.', 'error');
@@ -1132,11 +1169,23 @@ function showPaymentOptions() {
             // If form/payment is visible but cart is closed, force it open
             if ((formVisible || paymentVisible) && cartSidebar && !cartSidebar.classList.contains('open')) {
                 console.log('🛒 DETECTED: Cart closed while form visible - reopening!');
+                
+                // Force cart open with proper styling for square box design
                 cartSidebar.classList.add('open');
-                document.getElementById('cart-overlay').classList.add('active');
+                const cartOverlay = document.getElementById('cart-overlay');
+                if (cartOverlay) {
+                    cartOverlay.classList.add('active');
+                }
                 document.body.style.overflow = 'hidden';
+                
+                // Extra verification for square box design
+                setTimeout(() => {
+                    const computedStyle = window.getComputedStyle(cartSidebar);
+                    console.log('🛒 Cart position after force-open:', computedStyle.right);
+                    console.log('🛒 Cart transform after force-open:', computedStyle.transform);
+                }, 100);
             }
-        }, 500); // Check every 500ms
+        }, 250); // Check every 250ms (faster for square box design)
         
         // Store monitor reference to clear later
         window.cartStateMonitor = cartStateMonitor;
@@ -1406,14 +1455,28 @@ function proceedWithPayment() {
     userDetailsForm.style.display = 'none';
     paymentOptions.style.display = 'block';
     
-    // Ensure cart stays open when showing payment options
+    // Ensure cart stays open when showing payment options (CRITICAL for square box design)
     const cartSidebar = document.getElementById('cart-sidebar');
     const cartOverlay = document.getElementById('cart-overlay');
-    if (cartSidebar && !cartSidebar.classList.contains('open')) {
+    
+    // Force cart open immediately
+    if (cartSidebar) {
         cartSidebar.classList.add('open');
-        cartOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        console.log('🛒 FORCE: Cart opened for payment options');
     }
+    if (cartOverlay) {
+        cartOverlay.classList.add('active');
+        console.log('🛒 FORCE: Cart overlay activated');
+    }
+    document.body.style.overflow = 'hidden';
+    
+    // Double-check after a moment (for square box positioning)
+    setTimeout(() => {
+        if (cartSidebar && !cartSidebar.classList.contains('open')) {
+            cartSidebar.classList.add('open');
+            console.log('🛒 BACKUP: Re-opened cart after timeout');
+        }
+    }, 200);
     
     playSound('themeChange');
     // showNotification('💳 Now choose your payment method', 'success'); // Removed popup
