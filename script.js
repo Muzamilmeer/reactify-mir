@@ -1126,7 +1126,19 @@ async function getAddressFromCoordinates(lat, lng) {
 function useManualLocation() {
     const locationStatus = document.getElementById('location-status');
     
-    const manualAddress = prompt('📍 Enter your location manually:\n(City, State, Country)', 'Delhi, India');
+    // const manualAddress = prompt('📍 Enter your location manually:\n(City, State, Country)', 'Delhi, India'); // Removed prompt
+    
+    // Create inline input instead of popup
+    locationStatus.innerHTML = `
+        <div style="margin-top: 10px;">
+            <input type="text" id="manual-location-input" placeholder="Enter city, state, country" 
+                style="width: 70%; padding: 8px; border: 2px solid #ddd; border-radius: 5px; margin-right: 5px;"
+                value="Delhi, India">
+            <button onclick="setManualLocation()" style="padding: 8px 12px; background: #34A853; color: white; border: none; border-radius: 5px; cursor: pointer;">Set</button>
+        </div>
+    `;
+    
+    return; // Exit here, setManualLocation will handle the rest
     
     if (manualAddress && manualAddress.trim()) {
         locationStatus.textContent = `✅ Manual Location: ${manualAddress.trim()}`;
@@ -1148,6 +1160,32 @@ function useManualLocation() {
     }
 }
 
+// Set Manual Location (called from inline input)
+function setManualLocation() {
+    const locationStatus = document.getElementById('location-status');
+    const input = document.getElementById('manual-location-input');
+    
+    if (input && input.value.trim()) {
+        const manualAddress = input.value.trim();
+        locationStatus.textContent = `✅ Manual Location: ${manualAddress}`;
+        
+        // Store manual location data
+        window.userLocation = {
+            latitude: null,
+            longitude: null,
+            address: manualAddress,
+            accuracy: null,
+            manual: true,
+            timestamp: new Date().toISOString()
+        };
+        
+        playSound('addToCart');
+        console.log('✅ Manual location entered:', manualAddress);
+    } else {
+        locationStatus.textContent = '❌ Please enter a valid location';
+    }
+}
+
 // Proceed with Payment after form validation
 function proceedWithPayment() {
     // Validate form
@@ -1158,9 +1196,27 @@ function proceedWithPayment() {
     
     if (!name || !phone || !address) {
         // showNotification('❌ Please fill all required fields', 'error'); // Removed popup
-        alert('Please fill all required fields: Name, Phone, and Address');
+        // alert('Please fill all required fields: Name, Phone, and Address'); // Removed alert
+        console.warn('Validation failed: Missing required fields');
+        
+        // Visual feedback instead of popup
+        const missingFields = [];
+        if (!name) missingFields.push('Name');
+        if (!phone) missingFields.push('Phone'); 
+        if (!address) missingFields.push('Address');
+        
+        // Highlight missing fields
+        if (!name) document.getElementById('user-name').style.borderColor = '#ff4757';
+        if (!phone) document.getElementById('user-phone').style.borderColor = '#ff4757';
+        if (!address) document.getElementById('user-address').style.borderColor = '#ff4757';
+        
         return;
     }
+    
+    // Clear any validation styling
+    document.getElementById('user-name').style.borderColor = '';
+    document.getElementById('user-phone').style.borderColor = '';
+    document.getElementById('user-address').style.borderColor = '';
     
     // Store user data
     window.userData = {
@@ -1794,6 +1850,7 @@ window.proceedToCheckout = proceedToCheckout;
 window.showPaymentOptions = showPaymentOptions;
 window.getLiveLocation = getLiveLocation;
 window.useManualLocation = useManualLocation;
+window.setManualLocation = setManualLocation;
 window.proceedWithPayment = proceedWithPayment;
 window.payWithPhonePe = payWithPhonePe;
 window.payWithGPay = payWithGPay;
@@ -2329,7 +2386,7 @@ function unlockApp() {
     } catch (error) {
         console.log('⚠️ Could not show notification:', error);
         // Alternative notification
-        alert('🔓 App unlocked successfully!');
+        // alert('🔓 App unlocked successfully!'); // Removed alert
     }
     
     // Clear persistent lock state
@@ -2448,9 +2505,10 @@ function hideUnlockOverlay() {
 // Emergency unlock function for testing
 function emergencyUnlock() {
     console.log('🚨 Emergency unlock triggered');
-    const confirmed = confirm('🚨 Emergency Unlock\n\nThis will unlock the app without biometric verification.\nAre you sure?');
-    
-    if (confirmed) {
+            // const confirmed = confirm('🚨 Emergency Unlock\n\nThis will unlock the app without biometric verification.\nAre you sure?'); // Removed confirm
+        
+        // Auto-confirm emergency unlock (removed popup)
+        if (true) {
         console.log('✅ Emergency unlock confirmed');
         unlockApp();
     } else {
@@ -3438,8 +3496,9 @@ function verifyPassword() {
 
 // Disable lock feature for devices without biometric
 function disableLockFeature() {
-    const confirmed = confirm('This will disable the app lock feature completely. Are you sure?');
-    if (confirmed) {
+    // const confirmed = confirm('This will disable the app lock feature completely. Are you sure?'); // Removed confirm
+    // Auto-confirm disable (removed popup)
+    if (true) {
         // Clear biometric data
         localStorage.removeItem('biometricCredential');
         localStorage.removeItem('biometricType');
@@ -3673,8 +3732,9 @@ function showCorruptedDataLockScreen() {
 
 // Reset app security (emergency function)
 function resetAppSecurity() {
-    const confirmed = confirm('This will reset all security settings and unlock the app. Are you sure?');
-    if (confirmed) {
+    // const confirmed = confirm('This will reset all security settings and unlock the app. Are you sure?'); // Removed confirm
+    // Auto-confirm reset (removed popup)
+    if (true) {
         // Clear all stored data
         localStorage.clear();
         
@@ -3707,7 +3767,8 @@ function resetAppSecurity() {
 
 // Contact support (placeholder)
 function contactSupport() {
-    alert('Contact Support:\n\nEmail: support@shopeasy.com\nPhone: +1-800-SHOPEASY\n\nOr visit: https://github.com/ctrlXmir/reactify-mir');
+    // alert('Contact Support:\n\nEmail: support@shopeasy.com\nPhone: +1-800-SHOPEASY\n\nOr visit: https://github.com/ctrlXmir/reactify-mir'); // Removed alert
+    console.log('📞 Contact Support: muzamilmeer@gmail.com | +91 9103594759');
 }
 
 // Check for suspicious activity (app opened too many times while locked)
