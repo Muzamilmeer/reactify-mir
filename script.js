@@ -1201,22 +1201,26 @@ function getLiveLocation() {
     const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.protocol === 'file:';
     const isAndroidApp = /Android/i.test(navigator.userAgent) && (location.protocol === 'file:' || location.hostname === 'localhost' || window.Android);
     const isWebView = window.navigator.userAgent.includes('wv') || window.Android;
+    const isKodular = window.KodularStarter || navigator.userAgent.includes('Kodular') || window.AppInventor;
     
     console.log('🔍 Enhanced Geolocation check:', {
         hasGeolocation,
         isSecureContext,
         isAndroidApp,
         isWebView,
+        isKodular,
         userAgent: navigator.userAgent,
         protocol: location.protocol,
         hostname: location.hostname,
-        androidInterface: !!window.Android
+        androidInterface: !!window.Android,
+        kodularInterface: !!window.KodularStarter
     });
     
     // Debug: Show detection results to user
     console.log('📱 Environment Detection:', {
         'Android App': isAndroidApp,
         'WebView': isWebView,
+        'Kodular App': isKodular,
         'Geolocation Available': hasGeolocation,
         'Secure Context': isSecureContext
     });
@@ -1264,8 +1268,8 @@ function getLiveLocation() {
     `;
     
     // For Android apps, try location but focus on manual entry
-    if (isAndroidApp || isWebView) {
-        console.log('📱 Android app detected - trying location with manual fallback');
+    if (isAndroidApp || isWebView || isKodular) {
+        console.log('📱 Android/Kodular app detected - trying location with manual fallback');
         
         // Show manual option immediately for APKs with permission issues
         locationStatus.innerHTML = `
@@ -1282,7 +1286,7 @@ function getLiveLocation() {
                     </button>
                 </div>
                 <small style="color: #999; display: block; margin-top: 10px;">
-                    If auto location doesn't work, use manual entry
+                    ${isKodular ? 'Kodular WebViewer detected - Manual entry recommended' : 'If auto location doesn\'t work, use manual entry'}
                 </small>
             </div>
         `;
@@ -1788,6 +1792,125 @@ function openAndroidSettings() {
 // Show manual settings instructions
 function showManualSettingsInstructions() {
     alert('Go to:\nAndroid Settings → Apps → ShopEasy → Permissions → Location\n\nThen enable location permission and restart the app.');
+}
+
+// Show Kodular Payment Instructions (since direct app opening doesn't work)
+function showKodularPaymentInstructions(paymentMethod, paymentUrl, upiId, amount, transactionId) {
+    console.log('📱 Showing Kodular payment instructions for:', paymentMethod);
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 15px; padding: 2rem; max-width: 350px; margin: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); text-align: center;">
+            <h3 style="margin: 0 0 1.5rem 0; color: #333;">📱 Complete Payment in ${paymentMethod}</h3>
+            
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h4 style="color: #333; margin: 0 0 0.5rem 0;">💰 Payment Details:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    <strong>Amount:</strong> ₹${amount}<br>
+                    <strong>UPI ID:</strong> ${upiId}<br>
+                    <strong>Transaction ID:</strong> ${transactionId}
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem; text-align: left;">
+                <h4 style="color: #3498db; margin: 0 0 0.5rem 0;">📋 Steps to Pay:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    1. <strong>Copy UPI ID:</strong> ${upiId}<br>
+                    2. <strong>Open ${paymentMethod} app</strong> manually<br>
+                    3. <strong>Send Money</strong> to copied UPI ID<br>
+                    4. <strong>Enter Amount:</strong> ₹${amount}<br>
+                    5. <strong>Complete payment</strong> in app<br>
+                    6. <strong>Return here</strong> and confirm below
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <button onclick="copyUpiId('${upiId}')" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; width: 100%;">
+                    📋 Copy UPI ID (${upiId})
+                </button>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="closeKodularModal(); showPaymentStatusDialog('${paymentMethod}', '${transactionId}');" style="background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+                    ✅ I Paid - Verify
+                </button>
+                <button onclick="closeKodularModal(); cancelPayment('${paymentMethod}', '${transactionId}');" style="background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            closeKodularModal();
+        }
+    };
+    
+    document.body.appendChild(modal);
+    window.kodularPaymentModal = modal;
+}
+
+// Copy UPI ID to clipboard
+function copyUpiId(upiId) {
+    try {
+        navigator.clipboard.writeText(upiId).then(() => {
+            console.log('✅ UPI ID copied to clipboard');
+            // showNotification('📋 UPI ID copied to clipboard!', 'success'); // Removed popup
+            
+            // Visual feedback
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Copied!';
+            btn.style.background = '#27ae60';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '#3498db';
+            }, 2000);
+        }).catch(error => {
+            console.warn('❌ Clipboard API failed:', error);
+            fallbackCopyText(upiId);
+        });
+    } catch (error) {
+        console.warn('❌ Clipboard not available:', error);
+        fallbackCopyText(upiId);
+    }
+}
+
+// Fallback copy method
+function fallbackCopyText(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // showNotification('📋 UPI ID copied!', 'success'); // Removed popup
+    console.log('✅ UPI ID copied using fallback method');
+}
+
+// Close Kodular modal
+function closeKodularModal() {
+    if (window.kodularPaymentModal) {
+        document.body.removeChild(window.kodularPaymentModal);
+        window.kodularPaymentModal = null;
+    }
 }
 
 // Try Android location (simplified approach)
@@ -2428,10 +2551,19 @@ function payWithPhonePe() {
         startTime: new Date().toISOString()
     };
     
-    // Try to open PhonePe app
+    // Try to open PhonePe app with Kodular support
     try {
-        window.location.href = phonePeUrl;
-        console.log('✅ PhonePe app opening attempted');
+        // Check if Kodular environment
+        if (window.KodularStarter || window.AppInventor) {
+            console.log('📱 Kodular WebViewer detected - Using alternative method');
+            
+            // For Kodular, show payment instruction modal instead of direct app opening
+            showKodularPaymentInstructions('PhonePe', phonePeUrl, upiId, totalAmount, transactionId);
+            return;
+        } else {
+            window.location.href = phonePeUrl;
+            console.log('✅ PhonePe app opening attempted');
+        }
     } catch (error) {
         console.error('❌ Error opening PhonePe:', error);
     }
@@ -2474,8 +2606,14 @@ function payWithGPay() {
         startTime: new Date().toISOString()
     };
     
-    // Try to open GPay app
-    window.location.href = gpayUrl;
+    // Try to open GPay app with Kodular support
+    if (window.KodularStarter || window.AppInventor) {
+        console.log('📱 Kodular WebViewer detected - Using alternative method for GPay');
+        showKodularPaymentInstructions('Google Pay', gpayUrl, upiId, totalAmount, transactionId);
+        return;
+    } else {
+        window.location.href = gpayUrl;
+    }
     
     // Fallback
     setTimeout(() => {
