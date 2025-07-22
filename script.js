@@ -2084,44 +2084,12 @@ function openChat() {
     playSound('themeChange');
 }
 
-// New Chat Control Functions
+// Simple Chat Control Functions
 function minimizeChat() {
-    const chatWidget = document.getElementById('chat-widget');
-    const chatBody = document.getElementById('chat-body');
-    const minimizeBtn = document.getElementById('minimize-btn');
-    const maximizeBtn = document.getElementById('maximize-btn');
-    
-    // Minimize chat - hide body but keep header
-    chatWidget.classList.add('minimized');
-    chatBody.style.display = 'none';
-    minimizeBtn.style.display = 'none';
-    maximizeBtn.style.display = 'flex';
-    
-    chatOpen = false;
-    playSound('themeChange');
-}
-
-function maximizeChat() {
-    const chatWidget = document.getElementById('chat-widget');
-    const chatBody = document.getElementById('chat-body');
-    const minimizeBtn = document.getElementById('minimize-btn');
-    const maximizeBtn = document.getElementById('maximize-btn');
-    
-    // Maximize chat - show body again
-    chatWidget.classList.remove('minimized');
-    chatBody.style.display = 'flex';
-    minimizeBtn.style.display = 'flex';
-    maximizeBtn.style.display = 'none';
-    
-    chatOpen = true;
-    playSound('themeChange');
-}
-
-function closeChat() {
     const chatWidget = document.getElementById('chat-widget');
     const chatFloatBtn = document.getElementById('chat-float-btn');
     
-    // Close chat completely
+    // Minimize = Close chat completely (like before)
     chatWidget.style.display = 'none';
     chatWidget.classList.remove('open', 'minimized');
     
@@ -2132,6 +2100,16 @@ function closeChat() {
     
     chatOpen = false;
     playSound('themeChange');
+}
+
+function maximizeChat() {
+    // Same as openChat - open the chat
+    openChat();
+}
+
+function closeChat() {
+    // Same as minimize - close chat completely
+    minimizeChat();
 }
 
 // Legacy function for backward compatibility
