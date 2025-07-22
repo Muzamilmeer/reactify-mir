@@ -1263,10 +1263,29 @@ function getLiveLocation() {
         </div>
     `;
     
-    // For Android apps, check and request permissions first
+    // For Android apps, try location but focus on manual entry
     if (isAndroidApp || isWebView) {
-        console.log('📱 Android app detected - checking permissions first');
-        requestAndroidLocationPermission(locationStatus);
+        console.log('📱 Android app detected - trying location with manual fallback');
+        
+        // Show manual option immediately for APKs with permission issues
+        locationStatus.innerHTML = `
+            <div style="text-align: center; margin: 10px 0;">
+                <div style="margin-bottom: 15px;">
+                    <button onclick="tryAndroidLocation()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; width: 100%;">
+                        📍 Try Auto Location
+                    </button>
+                </div>
+                <div style="color: #666; margin: 10px 0;">── OR ──</div>
+                <div>
+                    <button onclick="useManualLocation()" style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;">
+                        📝 Enter Address Manually
+                    </button>
+                </div>
+                <small style="color: #999; display: block; margin-top: 10px;">
+                    If auto location doesn't work, use manual entry
+                </small>
+            </div>
+        `;
         return;
     }
     
@@ -1479,15 +1498,30 @@ function useManualLocation() {
     
     // const manualAddress = prompt('📍 Enter your location manually:\n(City, State, Country)', 'Delhi, India'); // Removed prompt
     
-    // Create inline input instead of popup
+    // Enhanced manual location input for APK
     locationStatus.innerHTML = `
-        <div style="margin-top: 10px;">
-            <input type="text" id="manual-location-input" placeholder="Enter city, state, country" 
-                style="width: 70%; padding: 8px; border: 2px solid #ddd; border-radius: 5px; margin-right: 5px;"
-                value="Delhi, India">
-            <button onclick="setManualLocation()" style="padding: 8px 12px; background: #34A853; color: white; border: none; border-radius: 5px; cursor: pointer;">Set</button>
+        <div style="margin: 15px 0; text-align: center;">
+            <h4 style="color: #333; margin: 10px 0;">📍 Enter Your Address</h4>
+            <div style="margin: 15px 0;">
+                <input type="text" id="manual-location-input" placeholder="Enter your full address (City, State, Country)" 
+                    style="width: 100%; padding: 12px; border: 2px solid #3498db; border-radius: 8px; font-size: 14px; margin-bottom: 15px; box-sizing: border-box;">
+                <button onclick="setManualLocation()" style="padding: 12px 25px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; width: 100%;">
+                    ✅ Set My Address
+                </button>
+            </div>
+            <small style="color: #666; display: block; margin-top: 10px;">
+                Examples: "Mumbai, Maharashtra" or "Delhi, India" or "Lahore, Pakistan"
+            </small>
         </div>
     `;
+    
+    // Focus on input after a moment
+    setTimeout(() => {
+        const input = document.getElementById('manual-location-input');
+        if (input) {
+            input.focus();
+        }
+    }, 100);
     
     return; // Exit here, setManualLocation will handle the rest
     
@@ -1756,6 +1790,119 @@ function showManualSettingsInstructions() {
     alert('Go to:\nAndroid Settings → Apps → ShopEasy → Permissions → Location\n\nThen enable location permission and restart the app.');
 }
 
+// Try Android location (simplified approach)
+function tryAndroidLocation() {
+    const locationStatus = document.getElementById('location-status');
+    
+    locationStatus.innerHTML = `
+        <div style="text-align: center; margin: 10px 0;">
+            <div>📍 Trying to get location...</div>
+            <small style="color: #666;">This may ask for permission</small>
+        </div>
+    `;
+    
+    console.log('📱 Attempting direct geolocation request...');
+    
+    // Direct geolocation request (will trigger permission if available)
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            console.log('✅ Location success in APK!', position);
+            
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            locationStatus.innerHTML = `
+                <div style="color: #27ae60; text-align: center; margin: 10px 0;">
+                    <strong>✅ Location Found!</strong><br>
+                    <small style="color: #666;">Getting address...</small>
+                </div>
+            `;
+            
+            // Get address
+            getAddressFromCoordinates(lat, lng)
+                .then(address => {
+                    locationStatus.innerHTML = `
+                        <div style="color: #27ae60; text-align: center; margin: 10px 0;">
+                            <strong>✅ Location Set</strong><br>
+                            <small style="color: #666;">${address}</small>
+                        </div>
+                    `;
+                    
+                    window.userLocation = {
+                        latitude: lat,
+                        longitude: lng,
+                        address: address,
+                        accuracy: position.coords.accuracy,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    playSound('addToCart');
+                })
+                .catch(error => {
+                    locationStatus.innerHTML = `
+                        <div style="color: #27ae60; text-align: center; margin: 10px 0;">
+                            <strong>✅ Location Set</strong><br>
+                            <small style="color: #666;">${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
+                        </div>
+                    `;
+                    
+                    window.userLocation = {
+                        latitude: lat,
+                        longitude: lng,
+                        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                        accuracy: position.coords.accuracy,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    playSound('addToCart');
+                });
+        },
+        function(error) {
+            console.log('❌ Location failed in APK:', error);
+            
+            // Show helpful message based on error
+            let message = '';
+            let suggestion = '';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = '📱 Location Permission Needed';
+                    suggestion = 'APK needs location permission in Android settings';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = '📍 GPS Unavailable';
+                    suggestion = 'Check if GPS is enabled on device';
+                    break;
+                case error.TIMEOUT:
+                    message = '⏱️ Location Timeout';
+                    suggestion = 'GPS signal taking too long';
+                    break;
+                default:
+                    message = '❌ Location Error';
+                    suggestion = 'Unable to get location';
+                    break;
+            }
+            
+            locationStatus.innerHTML = `
+                <div style="color: #e74c3c; text-align: center; margin: 10px 0;">
+                    <strong>${message}</strong><br>
+                    <small style="color: #666;">${suggestion}</small><br>
+                    <div style="margin-top: 15px;">
+                        <button onclick="useManualLocation()" style="padding: 8px 15px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                            📝 Use Manual Entry Instead
+                        </button>
+                    </div>
+                </div>
+            `;
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 0
+        }
+    );
+}
+
 // Removed Android help modal - using native permission flow instead
 
 // Set Manual Location (called from inline input)
@@ -1765,7 +1912,16 @@ function setManualLocation() {
     
     if (input && input.value.trim()) {
         const manualAddress = input.value.trim();
-        locationStatus.textContent = `✅ Manual Location: ${manualAddress}`;
+        
+        // Enhanced success message
+        locationStatus.innerHTML = `
+            <div style="color: #27ae60; text-align: center; margin: 15px 0;">
+                <strong>✅ Address Set Successfully!</strong><br>
+                <small style="color: #666; background: #f8f9fa; padding: 8px; border-radius: 5px; display: inline-block; margin-top: 8px;">
+                    📍 ${manualAddress}
+                </small>
+            </div>
+        `;
         
         // Store manual location data
         window.userLocation = {
@@ -1780,7 +1936,14 @@ function setManualLocation() {
         playSound('addToCart');
         console.log('✅ Manual location entered:', manualAddress);
     } else {
-        locationStatus.textContent = '❌ Please enter a valid location';
+        locationStatus.innerHTML = `
+            <div style="color: #e74c3c; text-align: center; margin: 10px 0;">
+                <strong>❌ Please enter a valid address</strong><br>
+                <button onclick="useManualLocation()" style="margin-top: 8px; padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    🔄 Try Again
+                </button>
+            </div>
+        `;
     }
 }
 
