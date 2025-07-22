@@ -2431,16 +2431,97 @@ function payWithPhonePe() {
         startTime: new Date().toISOString()
     };
     
-    // SIMPLE SOLUTION: Direct manual payment instructions (no URL scheme issues)
-    console.log('💳 Showing PhonePe payment instructions directly');
+    // Multiple payment methods with fallbacks
+    console.log('🚀 Attempting PhonePe payment with multiple fallbacks...');
     
-    // Show manual payment instructions immediately (safer approach)
-    showManualPaymentInstructions('PhonePe', upiId, totalAmount, transactionId);
+    // Method 1: Try PhonePe deep link
+    const tryPhonePeApp = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = phonePeUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('phonepe-attempted');
+                }, 1000);
+                
+                console.log('✅ PhonePe deep link attempted via iframe');
+            } catch (error) {
+                console.error('❌ PhonePe deep link failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 2: Generic UPI fallback
+    const tryGenericUPI = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const genericUpiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = genericUpiUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('upi-attempted');
+                }, 1000);
+                
+                console.log('✅ Generic UPI attempted via iframe');
+            } catch (error) {
+                console.error('❌ Generic UPI failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 3: Intent URL for Android
+    const tryAndroidIntent = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const intentUrl = `intent://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}#Intent;scheme=upi;package=com.phonepe.app;end`;
+                window.location.href = intentUrl;
+                resolve('intent-attempted');
+                console.log('✅ Android intent attempted');
+            } catch (error) {
+                console.error('❌ Android intent failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Execute payment attempts
+    tryPhonePeApp()
+        .then(() => {
+            console.log('📱 PhonePe attempt completed');
+            return new Promise(resolve => setTimeout(resolve, 1500));
+        })
+        .then(() => tryGenericUPI())
+        .then(() => {
+            console.log('🔄 UPI fallback completed');
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        })
+        .then(() => tryAndroidIntent())
+        .then(() => {
+            console.log('🤖 Android intent completed');
+        })
+        .catch(error => {
+            console.error('❌ All payment methods failed:', error);
+            // Show manual payment instructions as final fallback
+            showManualPaymentInstructions('PhonePe', upiId, totalAmount, transactionId);
+        });
     
     playSound('addToCart');
     // showNotification('📱 Opening PhonePe...', 'success'); // Removed popup
     
-    // No automatic status dialog for manual payment - user will click "I Paid" when done
+    // Show payment status dialog after app redirect - Give user time to complete payment
+    setTimeout(() => {
+        showPaymentStatusDialog('PhonePe', transactionId);
+    }, 8000); // Increased time for real payment
 }
 
 function payWithGPay() {
@@ -2461,15 +2542,95 @@ function payWithGPay() {
         startTime: new Date().toISOString()
     };
     
-    // SIMPLE SOLUTION: Direct manual payment instructions (no URL scheme issues)
-    console.log('💳 Showing GPay payment instructions directly');
+    // Multiple payment methods with fallbacks for GPay
+    console.log('🚀 Attempting GPay payment with multiple fallbacks...');
     
-    // Show manual payment instructions immediately (safer approach)
-    showManualPaymentInstructions('Google Pay', upiId, totalAmount, transactionId);
+    // Method 1: Try GPay deep link
+    const tryGPayApp = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = gpayUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('gpay-attempted');
+                }, 1000);
+                
+                console.log('✅ GPay deep link attempted via iframe');
+            } catch (error) {
+                console.error('❌ GPay deep link failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 2: Generic UPI fallback
+    const tryGenericUPI = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const genericUpiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = genericUpiUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('upi-attempted');
+                }, 1000);
+                
+                console.log('✅ Generic UPI attempted via iframe');
+            } catch (error) {
+                console.error('❌ Generic UPI failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 3: Intent URL for Android
+    const tryAndroidIntent = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const intentUrl = `intent://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+                window.location.href = intentUrl;
+                resolve('intent-attempted');
+                console.log('✅ Android intent attempted for GPay');
+            } catch (error) {
+                console.error('❌ Android intent failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Execute payment attempts
+    tryGPayApp()
+        .then(() => {
+            console.log('📱 GPay attempt completed');
+            return new Promise(resolve => setTimeout(resolve, 1500));
+        })
+        .then(() => tryGenericUPI())
+        .then(() => {
+            console.log('🔄 UPI fallback completed');
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        })
+        .then(() => tryAndroidIntent())
+        .then(() => {
+            console.log('🤖 Android intent completed');
+        })
+        .catch(error => {
+            console.error('❌ All GPay payment methods failed:', error);
+            // Show manual payment instructions as final fallback
+            showManualPaymentInstructions('Google Pay', upiId, totalAmount, transactionId);
+        });
     
     playSound('addToCart');
     // showNotification('📱 Opening Google Pay...', 'success'); // Removed popup
-    // No automatic status dialog for manual payment - user will click "I Paid" when done
+    setTimeout(() => {
+        showPaymentStatusDialog('Google Pay', transactionId);
+    }, 8000); // Increased time for real payment
 }
 
 function payWithPaytm() {
@@ -2490,15 +2651,95 @@ function payWithPaytm() {
     // Paytm Deep Link with transaction reference
     const paytmUrl = `paytmmp://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
     
-    // SIMPLE SOLUTION: Direct manual payment instructions (no URL scheme issues)
-    console.log('💳 Showing Paytm payment instructions directly');
+    // Multiple payment methods with fallbacks for Paytm
+    console.log('🚀 Attempting Paytm payment with multiple fallbacks...');
     
-    // Show manual payment instructions immediately (safer approach)
-    showManualPaymentInstructions('Paytm', upiId, totalAmount, transactionId);
+    // Method 1: Try Paytm deep link
+    const tryPaytmApp = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = paytmUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('paytm-attempted');
+                }, 1000);
+                
+                console.log('✅ Paytm deep link attempted via iframe');
+            } catch (error) {
+                console.error('❌ Paytm deep link failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 2: Generic UPI fallback
+    const tryGenericUPI = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const genericUpiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = genericUpiUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('upi-attempted');
+                }, 1000);
+                
+                console.log('✅ Generic UPI attempted via iframe');
+            } catch (error) {
+                console.error('❌ Generic UPI failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 3: Intent URL for Android
+    const tryAndroidIntent = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const intentUrl = `intent://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}#Intent;scheme=upi;package=net.one97.paytm;end`;
+                window.location.href = intentUrl;
+                resolve('intent-attempted');
+                console.log('✅ Android intent attempted for Paytm');
+            } catch (error) {
+                console.error('❌ Android intent failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Execute payment attempts
+    tryPaytmApp()
+        .then(() => {
+            console.log('📱 Paytm attempt completed');
+            return new Promise(resolve => setTimeout(resolve, 1500));
+        })
+        .then(() => tryGenericUPI())
+        .then(() => {
+            console.log('🔄 UPI fallback completed');
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        })
+        .then(() => tryAndroidIntent())
+        .then(() => {
+            console.log('🤖 Android intent completed');
+        })
+        .catch(error => {
+            console.error('❌ All Paytm payment methods failed:', error);
+            // Show manual payment instructions as final fallback
+            showManualPaymentInstructions('Paytm', upiId, totalAmount, transactionId);
+        });
     
     playSound('addToCart');
     // showNotification('📱 Opening Paytm...', 'success'); // Removed popup
-    // No automatic status dialog for manual payment - user will click "I Paid" when done
+    setTimeout(() => {
+        showPaymentStatusDialog('Paytm', transactionId);
+    }, 8000); // Increased time for real payment
 }
 
 function payWithUPI() {
@@ -4916,10 +5157,10 @@ function showManualPaymentInstructions(paymentMethod, upiId, amount, transaction
         <div style="background: white; border-radius: 15px; padding: 2rem; max-width: 350px; margin: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); text-align: center;">
             <h3 style="margin: 0 0 1.5rem 0; color: #333;">💳 Complete Payment Manually</h3>
             
-            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                <p style="margin: 0; color: #1565c0; font-size: 14px;">
-                    <strong>💡 Safe Payment Method</strong><br>
-                    Manual payment prevents URL errors & is 100% secure
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <p style="margin: 0; color: #856404; font-size: 14px;">
+                    <strong>App redirect not working?</strong><br>
+                    Follow manual steps below:
                 </p>
             </div>
             
