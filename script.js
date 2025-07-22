@@ -974,23 +974,68 @@ function showPaymentOptions() {
     // showNotification('📝 Please fill your details to continue', 'info'); // Removed popup
 }
 
-// Get Live Location with Address
+// Get Live Location with Address - Enhanced Detection
 function getLiveLocation() {
     const locationStatus = document.getElementById('location-status');
     
-    if (!navigator.geolocation) {
-        locationStatus.textContent = '❌ Geolocation not supported';
-        // showNotification('❌ Location not supported on this device', 'error'); // Removed popup
+    // Enhanced geolocation detection
+    const hasGeolocation = 'geolocation' in navigator;
+    const isSecureContext = window.isSecureContext || location.protocol === 'https:';
+    
+    console.log('🔍 Geolocation check:', {
+        hasGeolocation,
+        isSecureContext,
+        navigator: !!navigator.geolocation,
+        protocol: location.protocol
+    });
+    
+    if (!hasGeolocation) {
+        locationStatus.textContent = '❌ Location not available in this browser';
+        console.error('Geolocation API not available');
         return;
     }
     
+    if (!isSecureContext && location.hostname !== 'localhost') {
+        locationStatus.textContent = '⚠️ Location requires HTTPS (use manual address)';
+        console.warn('Geolocation requires secure context (HTTPS)');
+        return;
+    }
+    
+    locationStatus.textContent = '📍 Requesting location permission...';
+    
+    // Check permission first
+    if ('permissions' in navigator) {
+        navigator.permissions.query({name: 'geolocation'}).then(function(result) {
+            console.log('📍 Geolocation permission:', result.state);
+            if (result.state === 'denied') {
+                locationStatus.textContent = '❌ Location permission denied by user';
+                return;
+            }
+            
+            // Proceed with location request
+            requestLocation(locationStatus);
+        }).catch(function(error) {
+            console.warn('Permission query failed:', error);
+            // Fallback to direct request
+            requestLocation(locationStatus);
+        });
+    } else {
+        // Fallback for browsers without permissions API
+        requestLocation(locationStatus);
+    }
+}
+
+// Request location with improved error handling
+function requestLocation(locationStatus) {
     locationStatus.textContent = '📍 Getting location...';
     
     navigator.geolocation.getCurrentPosition(
         function(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
             
+            console.log('📍 Location obtained:', { lat, lng, accuracy });
             locationStatus.textContent = '📍 Getting address...';
             
             // Get address from coordinates using reverse geocoding
@@ -1003,11 +1048,12 @@ function getLiveLocation() {
                         latitude: lat,
                         longitude: lng,
                         address: address,
+                        accuracy: accuracy,
                         timestamp: new Date().toISOString()
                     };
                     
-                                // showNotification('✅ Live location and address captured!', 'success'); // Removed popup
-            playSound('addToCart');
+                    playSound('addToCart');
+                    console.log('✅ Location and address captured successfully');
                 })
                 .catch(error => {
                     console.error('Address lookup failed:', error);
@@ -1017,21 +1063,43 @@ function getLiveLocation() {
                         latitude: lat,
                         longitude: lng,
                         address: `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                        accuracy: accuracy,
                         timestamp: new Date().toISOString()
                     };
                     
-                    // showNotification('✅ Location captured (address lookup failed)', 'success'); // Removed popup
                     playSound('addToCart');
+                    console.log('✅ Location captured (address lookup failed)');
                 });
         },
         function(error) {
-            locationStatus.textContent = '❌ Location access denied';
-            // showNotification('❌ Please allow location access', 'error'); // Removed popup
             console.error('Geolocation error:', error);
+            
+            let errorMessage = '❌ Location error';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = '❌ Location permission denied';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = '❌ Location unavailable';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = '❌ Location request timed out';
+                    break;
+                default:
+                    errorMessage = '❌ Unknown location error';
+                    break;
+            }
+            
+            locationStatus.textContent = errorMessage;
+            console.error('Detailed geolocation error:', {
+                code: error.code,
+                message: error.message,
+                timestamp: new Date().toISOString()
+            });
         },
         {
             enableHighAccuracy: true,
-            timeout: 10000,
+            timeout: 15000, // Increased timeout
             maximumAge: 300000
         }
     );
@@ -1051,6 +1119,32 @@ async function getAddressFromCoordinates(lat, lng) {
     } catch (error) {
         console.error('Geocoding error:', error);
         return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+}
+
+// Manual Location Entry (Fallback)
+function useManualLocation() {
+    const locationStatus = document.getElementById('location-status');
+    
+    const manualAddress = prompt('📍 Enter your location manually:\n(City, State, Country)', 'Delhi, India');
+    
+    if (manualAddress && manualAddress.trim()) {
+        locationStatus.textContent = `✅ Manual Location: ${manualAddress.trim()}`;
+        
+        // Store manual location data
+        window.userLocation = {
+            latitude: null,
+            longitude: null,
+            address: manualAddress.trim(),
+            accuracy: null,
+            manual: true,
+            timestamp: new Date().toISOString()
+        };
+        
+        playSound('addToCart');
+        console.log('✅ Manual location entered:', manualAddress.trim());
+    } else {
+        locationStatus.textContent = '❌ Manual entry cancelled';
     }
 }
 
@@ -1699,6 +1793,7 @@ window.closeOrderModal = closeOrderModal;
 window.proceedToCheckout = proceedToCheckout;
 window.showPaymentOptions = showPaymentOptions;
 window.getLiveLocation = getLiveLocation;
+window.useManualLocation = useManualLocation;
 window.proceedWithPayment = proceedWithPayment;
 window.payWithPhonePe = payWithPhonePe;
 window.payWithGPay = payWithGPay;
