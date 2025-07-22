@@ -14,13 +14,13 @@ const sampleProducts = [
     {
         id: 1,
         title: "Cotton T-Shirt",
-        description: "Premium quality cotton t-shirt for daily wear",
-        price: 599,
-        originalPrice: 899,
+        description: "Premium quality cotton t-shirt for daily wear - TESTING OFFER!",
+        price: 1,
+        originalPrice: 599,
         category: "fashion",
         rating: 4.5,
         reviews: 1250,
-        badge: "Sale",
+        badge: "₹1 TEST",
         image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=300&fit=crop"
     },
     {
@@ -944,7 +944,7 @@ function closeOrderModal() {
     }
 }
 
-// Show Payment Options
+// Show User Details Form
 function showPaymentOptions() {
     console.log('🔍 showPaymentOptions called, cart length:', cart.length);
     
@@ -953,25 +953,103 @@ function showPaymentOptions() {
         return;
     }
     
-    const paymentOptions = document.getElementById('payment-options');
+    const userDetailsForm = document.getElementById('user-details-form');
     const checkoutBtn = document.getElementById('checkout-btn');
     
-    console.log('🔍 Payment Options Element:', paymentOptions);
+    console.log('🔍 User Details Form Element:', userDetailsForm);
     console.log('🔍 Checkout Button Element:', checkoutBtn);
     
-    if (paymentOptions && checkoutBtn) {
-        // Show payment options, hide proceed button
-        paymentOptions.style.display = 'block';
+    if (userDetailsForm && checkoutBtn) {
+        // Show user details form, hide proceed button
+        userDetailsForm.style.display = 'block';
         checkoutBtn.style.display = 'none';
-        console.log('✅ Payment options shown successfully!');
+        console.log('✅ User details form shown successfully!');
     } else {
-        console.error('❌ Payment options or checkout button not found!');
-        showNotification('❌ Payment system error! Please try again.', 'error');
+        console.error('❌ User details form or checkout button not found!');
+        showNotification('❌ Form system error! Please try again.', 'error');
         return;
     }
     
     playSound('themeChange');
-    showNotification('💳 Choose your payment method', 'info');
+    showNotification('📝 Please fill your details to continue', 'info');
+}
+
+// Get Live Location
+function getLiveLocation() {
+    const locationStatus = document.getElementById('location-status');
+    
+    if (!navigator.geolocation) {
+        locationStatus.textContent = '❌ Geolocation not supported';
+        showNotification('❌ Location not supported on this device', 'error');
+        return;
+    }
+    
+    locationStatus.textContent = '📍 Getting location...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            locationStatus.textContent = `✅ Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            
+            // Store location data
+            window.userLocation = {
+                latitude: lat,
+                longitude: lng,
+                timestamp: new Date().toISOString()
+            };
+            
+            showNotification('✅ Live location captured successfully!', 'success');
+            playSound('addToCart');
+        },
+        function(error) {
+            locationStatus.textContent = '❌ Location access denied';
+            showNotification('❌ Please allow location access', 'error');
+            console.error('Geolocation error:', error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+        }
+    );
+}
+
+// Proceed with Payment after form validation
+function proceedWithPayment() {
+    // Validate form
+    const name = document.getElementById('user-name').value.trim();
+    const phone = document.getElementById('user-phone').value.trim();
+    const address = document.getElementById('user-address').value.trim();
+    const email = document.getElementById('user-email').value.trim();
+    
+    if (!name || !phone || !address) {
+        showNotification('❌ Please fill all required fields', 'error');
+        return;
+    }
+    
+    // Store user data
+    window.userData = {
+        name: name,
+        phone: phone,
+        email: email,
+        address: address,
+        location: window.userLocation || null,
+        orderTime: new Date().toISOString()
+    };
+    
+    console.log('✅ User data collected:', window.userData);
+    
+    // Hide form, show payment options
+    const userDetailsForm = document.getElementById('user-details-form');
+    const paymentOptions = document.getElementById('payment-options');
+    
+    userDetailsForm.style.display = 'none';
+    paymentOptions.style.display = 'block';
+    
+    playSound('themeChange');
+    showNotification('💳 Now choose your payment method', 'success');
 }
 
 // Payment Functions - Direct App Opening (Like YouTube/Facebook)
@@ -1079,20 +1157,226 @@ function payWithUPI() {
 // Complete Payment
 function completePayment(paymentMethod) {
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const orderItems = [...cart]; // Store cart items for receipt
+    
+    // Generate receipt
+    generateReceipt(orderItems, totalAmount, paymentMethod);
     
     // Clear cart and close
     cart = [];
     updateCartUI();
     closeCart();
     
-    // Reset payment options
+    // Reset forms and options
+    const userDetailsForm = document.getElementById('user-details-form');
     const paymentOptions = document.getElementById('payment-options');
     const checkoutBtn = document.getElementById('checkout-btn');
-    paymentOptions.style.display = 'none';
-    checkoutBtn.style.display = 'block';
+    
+    if (userDetailsForm) userDetailsForm.style.display = 'none';
+    if (paymentOptions) paymentOptions.style.display = 'none';
+    if (checkoutBtn) checkoutBtn.style.display = 'block';
+    
+    // Clear form
+    document.getElementById('checkout-form').reset();
+    document.getElementById('location-status').textContent = '';
     
     playSound('checkoutSuccess');
     showNotification(`✅ Payment of ₹${totalAmount} via ${paymentMethod} completed successfully!`, 'success');
+}
+
+// Generate Receipt
+function generateReceipt(orderItems, totalAmount, paymentMethod) {
+    const userData = window.userData || {};
+    const orderId = 'SE' + Date.now().toString().slice(-8);
+    const transactionId = 'TXN' + Math.random().toString(36).substr(2, 10).toUpperCase();
+    const orderDate = new Date().toLocaleString('en-IN');
+    
+    const receiptHTML = `
+        <div class="receipt-header-content">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="color: #667eea; margin: 0;">🛍️ ShopEasy</h1>
+                <p style="margin: 0.5rem 0; color: #666;">Payment Receipt</p>
+                <hr style="border: 1px solid #667eea; width: 50%; margin: 1rem auto;">
+            </div>
+        </div>
+        
+        <div class="receipt-info">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                <div>
+                    <strong>📋 Order ID:</strong><br>
+                    <span style="color: #667eea; font-weight: bold;">${orderId}</span>
+                </div>
+                <div>
+                    <strong>🏷️ Transaction ID:</strong><br>
+                    <span style="color: #34A853; font-weight: bold;">${transactionId}</span>
+                </div>
+                <div>
+                    <strong>📅 Date & Time:</strong><br>
+                    ${orderDate}
+                </div>
+                <div>
+                    <strong>💳 Payment Method:</strong><br>
+                    <span style="color: #667eea;">${paymentMethod}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="customer-info" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3 style="color: #333; margin-top: 0;">👤 Customer Details</h3>
+            <p><strong>Name:</strong> ${userData.name || 'N/A'}</p>
+            <p><strong>Phone:</strong> ${userData.phone || 'N/A'}</p>
+            <p><strong>Email:</strong> ${userData.email || 'N/A'}</p>
+            <p><strong>Address:</strong> ${userData.address || 'N/A'}</p>
+            ${userData.location ? `<p><strong>📍 Location:</strong> ${userData.location.latitude.toFixed(6)}, ${userData.location.longitude.toFixed(6)}</p>` : ''}
+        </div>
+        
+        <div class="order-items">
+            <h3 style="color: #333; margin-bottom: 1rem;">🛒 Order Items</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
+                <thead>
+                    <tr style="background: #667eea; color: white;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Item</th>
+                        <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Qty</th>
+                        <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">Price</th>
+                        <th style="padding: 12px; text-align: right; border: 1px solid #ddd;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${orderItems.map(item => `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${item.title}</td>
+                            <td style="padding: 12px; text-align: center; border: 1px solid #ddd;">${item.quantity}</td>
+                            <td style="padding: 12px; text-align: right; border: 1px solid #ddd;">₹${item.price}</td>
+                            <td style="padding: 12px; text-align: right; border: 1px solid #ddd; font-weight: bold;">₹${item.price * item.quantity}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot>
+                    <tr style="background: #34A853; color: white;">
+                        <td colspan="3" style="padding: 15px; font-weight: bold; border: 1px solid #ddd;">TOTAL AMOUNT</td>
+                        <td style="padding: 15px; text-align: right; font-weight: bold; font-size: 1.2rem; border: 1px solid #ddd;">₹${totalAmount}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <div class="payment-status" style="text-align: center; background: #d4edda; border: 2px solid #c3e6cb; border-radius: 8px; padding: 1rem; margin-bottom: 2rem;">
+            <h3 style="color: #155724; margin: 0;">✅ Payment Successful</h3>
+            <p style="margin: 0.5rem 0; color: #155724;">Your payment has been processed successfully!</p>
+        </div>
+        
+        <div class="footer-info" style="text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 1rem;">
+            <p style="margin: 0;">Thank you for shopping with ShopEasy! 🛍️</p>
+            <p style="margin: 0.5rem 0;">For support: +91 9103594759 | muzamilmeer@gmail.com</p>
+            <p style="margin: 0; font-size: 0.9rem;">Generated on ${orderDate}</p>
+        </div>
+    `;
+    
+    // Show receipt modal
+    const receiptContent = document.getElementById('receipt-content');
+    const receiptModal = document.getElementById('receipt-modal-overlay');
+    
+    if (receiptContent && receiptModal) {
+        receiptContent.innerHTML = receiptHTML;
+        receiptModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Store receipt data for download/share
+        window.receiptData = {
+            orderId,
+            transactionId,
+            orderDate,
+            userData,
+            orderItems,
+            totalAmount,
+            paymentMethod,
+            html: receiptHTML
+        };
+        
+        console.log('📋 Receipt generated successfully!');
+    }
+}
+
+// Close Receipt Modal
+function closeReceiptModal() {
+    const receiptModal = document.getElementById('receipt-modal-overlay');
+    if (receiptModal) {
+        receiptModal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Download Receipt as PDF (simplified version)
+function downloadReceipt() {
+    if (!window.receiptData) {
+        showNotification('❌ No receipt data found', 'error');
+        return;
+    }
+    
+    // Create downloadable text version
+    const receiptText = `
+🛍️ SHOPEASY - PAYMENT RECEIPT
+================================
+
+📋 Order ID: ${window.receiptData.orderId}
+🏷️ Transaction ID: ${window.receiptData.transactionId}
+📅 Date: ${window.receiptData.orderDate}
+💳 Payment Method: ${window.receiptData.paymentMethod}
+
+👤 CUSTOMER DETAILS:
+Name: ${window.receiptData.userData.name || 'N/A'}
+Phone: ${window.receiptData.userData.phone || 'N/A'}
+Email: ${window.receiptData.userData.email || 'N/A'}
+Address: ${window.receiptData.userData.address || 'N/A'}
+
+🛒 ORDER ITEMS:
+${window.receiptData.orderItems.map(item => 
+    `${item.title} - Qty: ${item.quantity} - ₹${item.price} x ${item.quantity} = ₹${item.price * item.quantity}`
+).join('\n')}
+
+💰 TOTAL AMOUNT: ₹${window.receiptData.totalAmount}
+
+✅ Payment Status: SUCCESSFUL
+
+Thank you for shopping with ShopEasy! 🛍️
+Support: +91 9103594759 | muzamilmeer@gmail.com
+    `;
+    
+    // Download as text file
+    const blob = new Blob([receiptText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ShopEasy_Receipt_${window.receiptData.orderId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showNotification('📥 Receipt downloaded successfully!', 'success');
+    playSound('addToCart');
+}
+
+// Share Receipt
+function shareReceipt() {
+    if (!window.receiptData) {
+        showNotification('❌ No receipt data found', 'error');
+        return;
+    }
+    
+    const shareText = `🛍️ ShopEasy Receipt
+Order ID: ${window.receiptData.orderId}
+Amount: ₹${window.receiptData.totalAmount}
+Payment: ${window.receiptData.paymentMethod} ✅
+
+Thank you for shopping with ShopEasy!
+Support: +91 9103594759`;
+    
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    showNotification('📤 Receipt shared via WhatsApp!', 'success');
+    playSound('addToCart');
 }
 
 // Legacy function (keep for compatibility)
@@ -1113,10 +1397,15 @@ window.trackOrder = trackOrder;
 window.closeOrderModal = closeOrderModal;
 window.proceedToCheckout = proceedToCheckout;
 window.showPaymentOptions = showPaymentOptions;
+window.getLiveLocation = getLiveLocation;
+window.proceedWithPayment = proceedWithPayment;
 window.payWithPhonePe = payWithPhonePe;
 window.payWithGPay = payWithGPay;
 window.payWithPaytm = payWithPaytm;
 window.payWithUPI = payWithUPI;
+window.closeReceiptModal = closeReceiptModal;
+window.downloadReceipt = downloadReceipt;
+window.shareReceipt = shareReceipt;
 
 // Real Biometric Authentication System with WebAuthn
 let biometricSupported = false;

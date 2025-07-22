@@ -128,6 +128,38 @@
                     <strong>Total: ₹<span id="cart-total">0</span></strong>
                 </div>
                 
+                <!-- User Details Form -->
+                <div class="user-details-form" id="user-details-form" style="display: none;">
+                    <h4>📝 Enter Your Details</h4>
+                    <form id="checkout-form">
+                        <div class="form-group">
+                            <label>👤 Full Name *</label>
+                            <input type="text" id="user-name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>📱 Phone Number *</label>
+                            <input type="tel" id="user-phone" placeholder="Enter your phone number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>📧 Email Address</label>
+                            <input type="email" id="user-email" placeholder="Enter your email (optional)">
+                        </div>
+                        <div class="form-group">
+                            <label>🏠 Address *</label>
+                            <textarea id="user-address" placeholder="Enter your full address" required rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="location-btn" onclick="getLiveLocation()">
+                                📍 Get Live Location
+                            </button>
+                            <span id="location-status"></span>
+                        </div>
+                        <button type="button" class="proceed-payment-btn" onclick="proceedWithPayment()">
+                            Continue to Payment 💳
+                        </button>
+                    </form>
+                </div>
+
                 <!-- Payment Options -->
                 <div class="payment-options" id="payment-options" style="display: none;">
                     <h4>💳 Choose Payment Method</h4>
@@ -156,6 +188,29 @@
 
         <!-- Cart Overlay -->
         <div class="cart-overlay" id="cart-overlay"></div>
+
+        <!-- Receipt Modal -->
+        <div class="receipt-modal-overlay" id="receipt-modal-overlay">
+            <div class="receipt-modal">
+                <div class="receipt-header">
+                    <h2>🧾 Payment Receipt</h2>
+                    <button class="receipt-close" onclick="closeReceiptModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="receipt-content" id="receipt-content">
+                    <!-- Receipt content will be generated here -->
+                </div>
+                <div class="receipt-actions">
+                    <button class="receipt-btn download" onclick="downloadReceipt()">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button class="receipt-btn share" onclick="shareReceipt()">
+                        <i class="fas fa-share"></i> Share Receipt
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Biometric Login Modal -->
         <div class="modal-overlay" id="biometric-modal-overlay">

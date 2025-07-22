@@ -1400,6 +1400,191 @@ body {
     color: white;
 }
 
+/* User Details Form Styles */
+.user-details-form {
+    margin: 1rem 0;
+    padding: 1.5rem;
+    background: rgba(52, 168, 83, 0.1);
+    border-radius: 12px;
+    border: 2px solid rgba(52, 168, 83, 0.2);
+}
+
+.user-details-form h4 {
+    margin: 0 0 1rem 0;
+    text-align: center;
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(103, 126, 234, 0.3);
+}
+
+.location-btn {
+    background: linear-gradient(135deg, #34A853, #4285F4);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+}
+
+.location-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 168, 83, 0.4);
+}
+
+.proceed-payment-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.proceed-payment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+#location-status {
+    color: #34A853;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Receipt Modal Styles */
+.receipt-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.receipt-modal-overlay.active {
+    display: flex;
+}
+
+.receipt-modal {
+    background: var(--bg-color);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.receipt-header {
+    background: var(--gradient);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.receipt-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.receipt-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.receipt-content {
+    padding: 2rem;
+    background: white;
+    color: #333;
+}
+
+.receipt-actions {
+    padding: 1rem 2rem 2rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.receipt-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.receipt-btn.download {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.receipt-btn.share {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+}
+
+.receipt-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 .track-order-btn {
     width: 100%;
     background: linear-gradient(135deg, #25D366, #128C7E, #075E54);
