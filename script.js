@@ -1347,7 +1347,7 @@ function performSmartDetection(paymentMethod, transactionId) {
     }, 2000); // Reduced time for faster experience
 }
 
-// Show Manual Verification Only - No Automatic Success
+// Show Manual Verification with Screenshot Requirement
 function showManualVerificationOnly(paymentMethod, transactionId) {
     const statusDiv = document.getElementById('verification-status');
     const resultDiv = document.getElementById('verification-result');
@@ -1359,39 +1359,153 @@ function showManualVerificationOnly(paymentMethod, transactionId) {
     
     resultDiv.innerHTML = `
         <div style="text-align: center; margin-bottom: 1.5rem;">
-            <div style="font-size: 2.5rem; margin-bottom: 1rem;">💳</div>
-            <h3 style="margin: 0; color: #333;">Payment Verification Required</h3>
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="margin: 0; color: #333;">Payment Verification</h3>
             <p style="margin: 0.5rem 0; color: #666;">
-                Please check your ${paymentMethod} app and confirm payment status
+                Send payment screenshot to verify transaction
             </p>
             <p style="margin: 0.5rem 0; color: #999; font-size: 0.9rem;">
                 Amount: ₹${amount} | Transaction ID: ${transactionId}
             </p>
         </div>
         
+        <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <p style="margin: 0; color: #856404; font-size: 0.9rem; text-align: center;">
+                📱 Take screenshot of ${paymentMethod} payment confirmation<br>
+                📤 Send to WhatsApp: <strong>+91 9103594759</strong> for verification
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <button onclick="sendPaymentScreenshot('${paymentMethod}', '${transactionId}', ${amount})" 
+                style="background: #25D366; color: white; border: none; padding: 15px 25px; 
+                border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; width: 100%;">
+                📤 Send Screenshot to WhatsApp
+            </button>
+        </div>
+        
         <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-            <p style="margin: 0; color: #666; font-size: 0.9rem; text-align: center;">
-                ⚠️ Only confirm "SUCCESS" if money was actually deducted from your account
+            <h4 style="margin: 0 0 0.5rem 0; color: #333; font-size: 0.9rem;">After sending screenshot:</h4>
+            <p style="margin: 0; color: #666; font-size: 0.8rem;">
+                • Wait for verification<br>
+                • Admin will confirm payment status<br>
+                • Receipt will be generated based on verification
             </p>
         </div>
         
         <div style="display: flex; gap: 10px;">
-            <button onclick="confirmPaymentStatus(true, '${paymentMethod}', '${transactionId}')" 
-                style="background: #34A853; color: white; border: none; padding: 15px 20px; 
-                border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1rem;">
-                ✅ Payment Successful<br><span style="font-size: 0.8rem; opacity: 0.9;">Money was deducted</span>
+            <button onclick="proceedWithoutVerification('${paymentMethod}', '${transactionId}')" 
+                style="background: #6c757d; color: white; border: none; padding: 12px 15px; 
+                border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 0.9rem;">
+                Skip Verification<br><span style="font-size: 0.7rem; opacity: 0.9;">(Self-confirm)</span>
             </button>
-            <button onclick="confirmPaymentStatus(false, '${paymentMethod}', '${transactionId}')" 
-                style="background: #EA4335; color: white; border: none; padding: 15px 20px; 
-                border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1rem;">
-                ❌ Payment Failed<br><span style="font-size: 0.8rem; opacity: 0.9;">No money deducted</span>
+            <button onclick="cancelPayment('${paymentMethod}', '${transactionId}')" 
+                style="background: #dc3545; color: white; border: none; padding: 12px 15px; 
+                border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 0.9rem;">
+                Cancel Order<br><span style="font-size: 0.7rem; opacity: 0.9;">(No payment)</span>
             </button>
         </div>
-        
-        <p style="margin: 1rem 0 0 0; text-align: center; color: #999; font-size: 0.8rem;">
-            Check your bank balance or payment app transaction history
-        </p>
+          `;
+}
+
+// Send Payment Screenshot to WhatsApp
+function sendPaymentScreenshot(paymentMethod, transactionId, amount) {
+    const userData = window.userData || {};
+    
+    const message = `🔍 PAYMENT VERIFICATION REQUEST
+
+📱 Payment Details:
+• Method: ${paymentMethod}
+• Transaction ID: ${transactionId}
+• Amount: ₹${amount}
+• Time: ${new Date().toLocaleString('en-IN')}
+
+👤 Customer Details:
+• Name: ${userData.name || 'N/A'}
+• Phone: ${userData.phone || 'N/A'}
+• Address: ${userData.address || 'N/A'}
+
+📤 I am sending payment screenshot for verification.
+Please confirm if payment is successful and generate receipt accordingly.
+
+Thank you!`;
+
+    const whatsappUrl = `https://wa.me/919103594759?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    // Show waiting message
+    closeVerificationModal();
+    showWaitingForVerification(paymentMethod, transactionId);
+}
+
+// Show waiting for verification message
+function showWaitingForVerification(paymentMethod, transactionId) {
+    const modalHTML = `
+        <div id="waiting-verification-modal" style="
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.8); z-index: 20000; display: flex; 
+            justify-content: center; align-items: center;">
+            <div style="
+                background: white; border-radius: 15px; padding: 2rem; 
+                max-width: 400px; width: 90%; text-align: center; 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                
+                <div style="font-size: 3rem; margin-bottom: 1rem;">⏳</div>
+                <h3 style="margin: 0 0 1rem 0; color: #333;">Waiting for Verification</h3>
+                <p style="color: #666; margin-bottom: 1.5rem;">
+                    Screenshot sent to admin. Please wait for payment verification.
+                </p>
+                
+                <div style="background: #e7f3ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <p style="margin: 0; color: #0066cc; font-size: 0.9rem;">
+                        💬 Admin will verify your payment and send receipt via WhatsApp
+                    </p>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="proceedWithoutVerification('${paymentMethod}', '${transactionId}')" 
+                        style="background: #6c757d; color: white; border: none; padding: 12px 15px; 
+                        border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">
+                        Continue Anyway
+                    </button>
+                    <button onclick="closeWaitingModal()" 
+                        style="background: #667eea; color: white; border: none; padding: 12px 15px; 
+                        border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
     `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Proceed without verification (fallback)
+function proceedWithoutVerification(paymentMethod, transactionId) {
+    closeVerificationModal();
+    closeWaitingModal();
+    
+    // Show self-confirmation modal
+    const isSuccess = confirm('Did you actually complete the payment?\n\nClick OK only if money was deducted from your account.');
+    completePayment(paymentMethod, isSuccess ? 'success' : 'failed', transactionId);
+}
+
+// Cancel payment
+function cancelPayment(paymentMethod, transactionId) {
+    closeVerificationModal();
+    closeWaitingModal();
+    
+    // Generate failed receipt
+    completePayment(paymentMethod, 'failed', transactionId);
+}
+
+// Close waiting modal
+function closeWaitingModal() {
+    const modal = document.getElementById('waiting-verification-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 // Show Verification Result
@@ -1913,6 +2027,10 @@ window.shareReceipt = shareReceipt;
 window.confirmPaymentStatus = confirmPaymentStatus;
 window.closeVerificationModal = closeVerificationModal;
 window.retryPayment = retryPayment;
+window.sendPaymentScreenshot = sendPaymentScreenshot;
+window.proceedWithoutVerification = proceedWithoutVerification;
+window.cancelPayment = cancelPayment;
+window.closeWaitingModal = closeWaitingModal;
 
 // Real Biometric Authentication System with WebAuthn
 let biometricSupported = false;
