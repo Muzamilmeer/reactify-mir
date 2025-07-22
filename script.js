@@ -2431,24 +2431,89 @@ function payWithPhonePe() {
         startTime: new Date().toISOString()
     };
     
-    // Try to open PhonePe app
-    try {
-        window.location.href = phonePeUrl;
-        console.log('✅ PhonePe app opening attempted');
-    } catch (error) {
-        console.error('❌ Error opening PhonePe:', error);
-    }
+    // Multiple payment methods with fallbacks
+    console.log('🚀 Attempting PhonePe payment with multiple fallbacks...');
     
-    // Fallback for web/desktop
-    setTimeout(() => {
-        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
-        console.log('🔄 Fallback URL:', fallbackUrl);
-        try {
-            window.location.href = fallbackUrl;
-        } catch (error) {
-            console.error('❌ Fallback error:', error);
-        }
-    }, 1500);
+    // Method 1: Try PhonePe deep link
+    const tryPhonePeApp = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = phonePeUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('phonepe-attempted');
+                }, 1000);
+                
+                console.log('✅ PhonePe deep link attempted via iframe');
+            } catch (error) {
+                console.error('❌ PhonePe deep link failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 2: Generic UPI fallback
+    const tryGenericUPI = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const genericUpiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = genericUpiUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('upi-attempted');
+                }, 1000);
+                
+                console.log('✅ Generic UPI attempted via iframe');
+            } catch (error) {
+                console.error('❌ Generic UPI failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 3: Intent URL for Android
+    const tryAndroidIntent = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const intentUrl = `intent://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}#Intent;scheme=upi;package=com.phonepe.app;end`;
+                window.location.href = intentUrl;
+                resolve('intent-attempted');
+                console.log('✅ Android intent attempted');
+            } catch (error) {
+                console.error('❌ Android intent failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Execute payment attempts
+    tryPhonePeApp()
+        .then(() => {
+            console.log('📱 PhonePe attempt completed');
+            return new Promise(resolve => setTimeout(resolve, 1500));
+        })
+        .then(() => tryGenericUPI())
+        .then(() => {
+            console.log('🔄 UPI fallback completed');
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        })
+        .then(() => tryAndroidIntent())
+        .then(() => {
+            console.log('🤖 Android intent completed');
+        })
+        .catch(error => {
+            console.error('❌ All payment methods failed:', error);
+            // Show manual payment instructions as final fallback
+            showManualPaymentInstructions('PhonePe', upiId, totalAmount, transactionId);
+        });
     
     playSound('addToCart');
     // showNotification('📱 Opening PhonePe...', 'success'); // Removed popup
@@ -2477,14 +2542,89 @@ function payWithGPay() {
         startTime: new Date().toISOString()
     };
     
-    // Try to open GPay app
-    window.location.href = gpayUrl;
+    // Multiple payment methods with fallbacks for GPay
+    console.log('🚀 Attempting GPay payment with multiple fallbacks...');
     
-    // Fallback
-    setTimeout(() => {
-        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
-        window.location.href = fallbackUrl;
-    }, 1500);
+    // Method 1: Try GPay deep link
+    const tryGPayApp = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = gpayUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('gpay-attempted');
+                }, 1000);
+                
+                console.log('✅ GPay deep link attempted via iframe');
+            } catch (error) {
+                console.error('❌ GPay deep link failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 2: Generic UPI fallback
+    const tryGenericUPI = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const genericUpiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = genericUpiUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('upi-attempted');
+                }, 1000);
+                
+                console.log('✅ Generic UPI attempted via iframe');
+            } catch (error) {
+                console.error('❌ Generic UPI failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 3: Intent URL for Android
+    const tryAndroidIntent = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const intentUrl = `intent://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+                window.location.href = intentUrl;
+                resolve('intent-attempted');
+                console.log('✅ Android intent attempted for GPay');
+            } catch (error) {
+                console.error('❌ Android intent failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Execute payment attempts
+    tryGPayApp()
+        .then(() => {
+            console.log('📱 GPay attempt completed');
+            return new Promise(resolve => setTimeout(resolve, 1500));
+        })
+        .then(() => tryGenericUPI())
+        .then(() => {
+            console.log('🔄 UPI fallback completed');
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        })
+        .then(() => tryAndroidIntent())
+        .then(() => {
+            console.log('🤖 Android intent completed');
+        })
+        .catch(error => {
+            console.error('❌ All GPay payment methods failed:', error);
+            // Show manual payment instructions as final fallback
+            showManualPaymentInstructions('Google Pay', upiId, totalAmount, transactionId);
+        });
     
     playSound('addToCart');
     // showNotification('📱 Opening Google Pay...', 'success'); // Removed popup
@@ -2511,14 +2651,89 @@ function payWithPaytm() {
     // Paytm Deep Link with transaction reference
     const paytmUrl = `paytmmp://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
     
-    // Try to open Paytm app
-    window.location.href = paytmUrl;
+    // Multiple payment methods with fallbacks for Paytm
+    console.log('🚀 Attempting Paytm payment with multiple fallbacks...');
     
-    // Fallback
-    setTimeout(() => {
-        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
-        window.location.href = fallbackUrl;
-    }, 1500);
+    // Method 1: Try Paytm deep link
+    const tryPaytmApp = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = paytmUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('paytm-attempted');
+                }, 1000);
+                
+                console.log('✅ Paytm deep link attempted via iframe');
+            } catch (error) {
+                console.error('❌ Paytm deep link failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 2: Generic UPI fallback
+    const tryGenericUPI = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const genericUpiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}`;
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = genericUpiUrl;
+                document.body.appendChild(iframe);
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    resolve('upi-attempted');
+                }, 1000);
+                
+                console.log('✅ Generic UPI attempted via iframe');
+            } catch (error) {
+                console.error('❌ Generic UPI failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Method 3: Intent URL for Android
+    const tryAndroidIntent = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                const intentUrl = `intent://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy%20Payment&tr=${transactionId}#Intent;scheme=upi;package=net.one97.paytm;end`;
+                window.location.href = intentUrl;
+                resolve('intent-attempted');
+                console.log('✅ Android intent attempted for Paytm');
+            } catch (error) {
+                console.error('❌ Android intent failed:', error);
+                reject(error);
+            }
+        });
+    };
+    
+    // Execute payment attempts
+    tryPaytmApp()
+        .then(() => {
+            console.log('📱 Paytm attempt completed');
+            return new Promise(resolve => setTimeout(resolve, 1500));
+        })
+        .then(() => tryGenericUPI())
+        .then(() => {
+            console.log('🔄 UPI fallback completed');
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        })
+        .then(() => tryAndroidIntent())
+        .then(() => {
+            console.log('🤖 Android intent completed');
+        })
+        .catch(error => {
+            console.error('❌ All Paytm payment methods failed:', error);
+            // Show manual payment instructions as final fallback
+            showManualPaymentInstructions('Paytm', upiId, totalAmount, transactionId);
+        });
     
     playSound('addToCart');
     // showNotification('📱 Opening Paytm...', 'success'); // Removed popup
@@ -4918,3 +5133,137 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// Manual Payment Instructions (Final Fallback)
+function showManualPaymentInstructions(paymentMethod, upiId, amount, transactionId) {
+    console.log('📋 Showing manual payment instructions for:', paymentMethod);
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 15px; padding: 2rem; max-width: 350px; margin: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); text-align: center;">
+            <h3 style="margin: 0 0 1.5rem 0; color: #333;">💳 Complete Payment Manually</h3>
+            
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <p style="margin: 0; color: #856404; font-size: 14px;">
+                    <strong>App redirect not working?</strong><br>
+                    Follow manual steps below:
+                </p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h4 style="color: #333; margin: 0 0 0.5rem 0;">💰 Payment Details:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    <strong>Amount:</strong> ₹${amount}<br>
+                    <strong>UPI ID:</strong> ${upiId}<br>
+                    <strong>Transaction ID:</strong> ${transactionId}
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem; text-align: left;">
+                <h4 style="color: #3498db; margin: 0 0 0.5rem 0;">📱 Manual Steps:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    1. <strong>Open ${paymentMethod} app</strong> manually<br>
+                    2. <strong>Go to "Send Money"</strong> or "Pay"<br>
+                    3. <strong>Enter UPI ID:</strong> ${upiId}<br>
+                    4. <strong>Enter Amount:</strong> ₹${amount}<br>
+                    5. <strong>Add Note:</strong> ShopEasy Payment<br>
+                    6. <strong>Complete payment</strong> in app<br>
+                    7. <strong>Return here</strong> and confirm below
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <button onclick="copyToClipboard('${upiId}', this)" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 10px; width: 100%;">
+                    📋 Copy UPI ID (${upiId})
+                </button>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="closeManualModal(); showPaymentStatusDialog('${paymentMethod}', '${transactionId}');" style="background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+                    ✅ I Paid - Verify
+                </button>
+                <button onclick="closeManualModal(); cancelPayment('${paymentMethod}', '${transactionId}');" style="background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    ❌ Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            closeManualModal();
+        }
+    };
+    
+    document.body.appendChild(modal);
+    window.manualPaymentModal = modal;
+}
+
+// Copy to clipboard function
+function copyToClipboard(text, button) {
+    try {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('✅ Text copied to clipboard');
+            
+            // Visual feedback
+            const originalText = button.textContent;
+            button.textContent = '✅ Copied!';
+            button.style.background = '#27ae60';
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = '#3498db';
+            }, 2000);
+        }).catch(error => {
+            console.warn('❌ Clipboard API failed:', error);
+            fallbackCopyText(text, button);
+        });
+    } catch (error) {
+        console.warn('❌ Clipboard not available:', error);
+        fallbackCopyText(text, button);
+    }
+}
+
+// Fallback copy method
+function fallbackCopyText(text, button) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // Visual feedback
+    const originalText = button.textContent;
+    button.textContent = '✅ Copied!';
+    button.style.background = '#27ae60';
+    
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = '#3498db';
+    }, 2000);
+    
+    console.log('✅ Text copied using fallback method');
+}
+
+// Close manual payment modal
+function closeManualModal() {
+    if (window.manualPaymentModal) {
+        document.body.removeChild(window.manualPaymentModal);
+        window.manualPaymentModal = null;
+    }
+}
