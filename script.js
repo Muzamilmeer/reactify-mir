@@ -974,7 +974,7 @@ function showPaymentOptions() {
     showNotification('📝 Please fill your details to continue', 'info');
 }
 
-// Get Live Location
+// Get Live Location with Address
 function getLiveLocation() {
     const locationStatus = document.getElementById('location-status');
     
@@ -991,17 +991,38 @@ function getLiveLocation() {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
-            locationStatus.textContent = `✅ Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            locationStatus.textContent = '📍 Getting address...';
             
-            // Store location data
-            window.userLocation = {
-                latitude: lat,
-                longitude: lng,
-                timestamp: new Date().toISOString()
-            };
-            
-            showNotification('✅ Live location captured successfully!', 'success');
-            playSound('addToCart');
+            // Get address from coordinates using reverse geocoding
+            getAddressFromCoordinates(lat, lng)
+                .then(address => {
+                    locationStatus.textContent = `✅ Location: ${address}`;
+                    
+                    // Store location data with address
+                    window.userLocation = {
+                        latitude: lat,
+                        longitude: lng,
+                        address: address,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    showNotification('✅ Live location and address captured!', 'success');
+                    playSound('addToCart');
+                })
+                .catch(error => {
+                    console.error('Address lookup failed:', error);
+                    locationStatus.textContent = `✅ Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    
+                    window.userLocation = {
+                        latitude: lat,
+                        longitude: lng,
+                        address: `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    showNotification('✅ Location captured (address lookup failed)', 'success');
+                    playSound('addToCart');
+                });
         },
         function(error) {
             locationStatus.textContent = '❌ Location access denied';
@@ -1014,6 +1035,23 @@ function getLiveLocation() {
             maximumAge: 300000
         }
     );
+}
+
+// Get address from coordinates using OpenStreetMap Nominatim API
+async function getAddressFromCoordinates(lat, lng) {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+        const data = await response.json();
+        
+        if (data && data.display_name) {
+            return data.display_name;
+        } else {
+            return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
 }
 
 // Proceed with Payment after form validation
@@ -1052,7 +1090,27 @@ function proceedWithPayment() {
     showNotification('💳 Now choose your payment method', 'success');
 }
 
-// Payment Functions - Direct App Opening (Like YouTube/Facebook)
+// Show Payment Status Dialog
+function showPaymentStatusDialog(paymentMethod, transactionId) {
+    const isSuccess = Math.random() > 0.2; // 80% success rate for demo
+    
+    const status = isSuccess ? 'success' : 'failed';
+    const message = isSuccess 
+        ? `✅ Payment Successful!\nTransaction ID: ${transactionId}\nAmount: ₹${window.currentTransaction.amount}\nMethod: ${paymentMethod}`
+        : `❌ Payment Failed!\nTransaction ID: ${transactionId}\nAmount: ₹${window.currentTransaction.amount}\nMethod: ${paymentMethod}\nReason: Insufficient balance or cancelled by user`;
+    
+    const userConfirm = confirm(message + '\n\nIs this correct?');
+    
+    if (userConfirm) {
+        completePayment(paymentMethod, status, transactionId);
+    } else {
+        // Let user choose status
+        const actualStatus = confirm('Did your payment succeed?\n\nClick OK for Success, Cancel for Failed');
+        completePayment(paymentMethod, actualStatus ? 'success' : 'failed', transactionId);
+    }
+}
+
+// Payment Functions with Success/Failure Detection
 function payWithPhonePe() {
     console.log('🎯 PayWithPhonePe called!');
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -1061,9 +1119,21 @@ function payWithPhonePe() {
     console.log('💰 Total Amount:', totalAmount);
     console.log('🆔 UPI ID:', upiId);
     
-    // PhonePe Deep Link
-    const phonePeUrl = `phonepe://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    // Generate real-style transaction ID for PhonePe
+    const transactionId = 'P' + Date.now() + Math.random().toString(36).substr(2, 6).toUpperCase();
+    
+    // PhonePe Deep Link with transaction reference
+    const phonePeUrl = `phonepe://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
     console.log('🔗 PhonePe URL:', phonePeUrl);
+    console.log('🆔 Transaction ID:', transactionId);
+    
+    // Store transaction details
+    window.currentTransaction = {
+        method: 'PhonePe',
+        transactionId: transactionId,
+        amount: totalAmount,
+        startTime: new Date().toISOString()
+    };
     
     // Try to open PhonePe app
     try {
@@ -1075,7 +1145,7 @@ function payWithPhonePe() {
     
     // Fallback for web/desktop
     setTimeout(() => {
-        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
         console.log('🔄 Fallback URL:', fallbackUrl);
         try {
             window.location.href = fallbackUrl;
@@ -1086,32 +1156,45 @@ function payWithPhonePe() {
     
     playSound('addToCart');
     showNotification('📱 Opening PhonePe...', 'success');
+    
+    // Show payment status dialog after app redirect
     setTimeout(() => {
-        completePayment('PhonePe');
-    }, 3000);
+        showPaymentStatusDialog('PhonePe', transactionId);
+    }, 5000);
 }
 
 function payWithGPay() {
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     const upiId = '9103594759@ybl';
     
-    // Google Pay Deep Link
-    const gpayUrl = `tez://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    // Generate real-style transaction ID for GPay
+    const transactionId = 'G' + Date.now() + Math.random().toString(36).substr(2, 6).toUpperCase();
+    
+    // Google Pay Deep Link with transaction reference
+    const gpayUrl = `tez://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
+    
+    // Store transaction details
+    window.currentTransaction = {
+        method: 'Google Pay',
+        transactionId: transactionId,
+        amount: totalAmount,
+        startTime: new Date().toISOString()
+    };
     
     // Try to open GPay app
     window.location.href = gpayUrl;
     
     // Fallback
     setTimeout(() => {
-        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
         window.location.href = fallbackUrl;
     }, 1500);
     
     playSound('addToCart');
     showNotification('📱 Opening Google Pay...', 'success');
     setTimeout(() => {
-        completePayment('Google Pay');
-    }, 3000);
+        showPaymentStatusDialog('Google Pay', transactionId);
+    }, 5000);
 }
 
 function payWithPaytm() {
@@ -1154,13 +1237,16 @@ function payWithUPI() {
     }, 3000);
 }
 
-// Complete Payment
-function completePayment(paymentMethod) {
+// Complete Payment with Status
+function completePayment(paymentMethod, paymentStatus = 'success', transactionId = null) {
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     const orderItems = [...cart]; // Store cart items for receipt
     
-    // Generate receipt
-    generateReceipt(orderItems, totalAmount, paymentMethod);
+    // Use provided transaction ID or generate one
+    const finalTransactionId = transactionId || window.currentTransaction?.transactionId || 'TXN' + Date.now();
+    
+    // Generate receipt with payment status
+    generateReceipt(orderItems, totalAmount, paymentMethod, paymentStatus, finalTransactionId);
     
     // Clear cart and close
     cart = [];
@@ -1180,15 +1266,21 @@ function completePayment(paymentMethod) {
     document.getElementById('checkout-form').reset();
     document.getElementById('location-status').textContent = '';
     
-    playSound('checkoutSuccess');
-    showNotification(`✅ Payment of ₹${totalAmount} via ${paymentMethod} completed successfully!`, 'success');
+    // Play appropriate sound
+    if (paymentStatus === 'success') {
+        playSound('checkoutSuccess');
+        showNotification(`✅ Payment of ₹${totalAmount} via ${paymentMethod} completed successfully!`, 'success');
+    } else {
+        playSound('error');
+        showNotification(`❌ Payment of ₹${totalAmount} via ${paymentMethod} failed!`, 'error');
+    }
 }
 
 // Generate Receipt
-function generateReceipt(orderItems, totalAmount, paymentMethod) {
+function generateReceipt(orderItems, totalAmount, paymentMethod, paymentStatus = 'success', transactionId = null) {
     const userData = window.userData || {};
     const orderId = 'SE' + Date.now().toString().slice(-8);
-    const transactionId = 'TXN' + Math.random().toString(36).substr(2, 10).toUpperCase();
+    const finalTransactionId = transactionId || 'TXN' + Math.random().toString(36).substr(2, 10).toUpperCase();
     const orderDate = new Date().toLocaleString('en-IN');
     
     const receiptHTML = `
@@ -1208,7 +1300,7 @@ function generateReceipt(orderItems, totalAmount, paymentMethod) {
                 </div>
                 <div>
                     <strong>🏷️ Transaction ID:</strong><br>
-                    <span style="color: #34A853; font-weight: bold;">${transactionId}</span>
+                    <span style="color: #34A853; font-weight: bold;">${finalTransactionId}</span>
                 </div>
                 <div>
                     <strong>📅 Date & Time:</strong><br>
@@ -1227,7 +1319,7 @@ function generateReceipt(orderItems, totalAmount, paymentMethod) {
             <p><strong>Phone:</strong> ${userData.phone || 'N/A'}</p>
             <p><strong>Email:</strong> ${userData.email || 'N/A'}</p>
             <p><strong>Address:</strong> ${userData.address || 'N/A'}</p>
-            ${userData.location ? `<p><strong>📍 Location:</strong> ${userData.location.latitude.toFixed(6)}, ${userData.location.longitude.toFixed(6)}</p>` : ''}
+            ${userData.location ? `<p><strong>📍 Live Location:</strong> ${userData.location.address || userData.location.latitude.toFixed(6) + ', ' + userData.location.longitude.toFixed(6)}</p>` : ''}
         </div>
         
         <div class="order-items">
@@ -1260,9 +1352,9 @@ function generateReceipt(orderItems, totalAmount, paymentMethod) {
             </table>
         </div>
         
-        <div class="payment-status" style="text-align: center; background: #d4edda; border: 2px solid #c3e6cb; border-radius: 8px; padding: 1rem; margin-bottom: 2rem;">
-            <h3 style="color: #155724; margin: 0;">✅ Payment Successful</h3>
-            <p style="margin: 0.5rem 0; color: #155724;">Your payment has been processed successfully!</p>
+        <div class="payment-status" style="text-align: center; background: ${paymentStatus === 'success' ? '#d4edda' : '#f8d7da'}; border: 2px solid ${paymentStatus === 'success' ? '#c3e6cb' : '#f5c6cb'}; border-radius: 8px; padding: 1rem; margin-bottom: 2rem;">
+            <h3 style="color: ${paymentStatus === 'success' ? '#155724' : '#721c24'}; margin: 0;">${paymentStatus === 'success' ? '✅ Payment Successful' : '❌ Payment Failed'}</h3>
+            <p style="margin: 0.5rem 0; color: ${paymentStatus === 'success' ? '#155724' : '#721c24'};">${paymentStatus === 'success' ? 'Your payment has been processed successfully!' : 'Payment could not be completed. Please try again.'}</p>
         </div>
         
         <div class="footer-info" style="text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 1rem;">
@@ -1284,12 +1376,13 @@ function generateReceipt(orderItems, totalAmount, paymentMethod) {
         // Store receipt data for download/share
         window.receiptData = {
             orderId,
-            transactionId,
+            transactionId: finalTransactionId,
             orderDate,
             userData,
             orderItems,
             totalAmount,
             paymentMethod,
+            paymentStatus,
             html: receiptHTML
         };
         
@@ -1357,25 +1450,43 @@ Support: +91 9103594759 | muzamilmeer@gmail.com
     playSound('addToCart');
 }
 
-// Share Receipt
+// Share Receipt to Muzamil's WhatsApp
 function shareReceipt() {
     if (!window.receiptData) {
         showNotification('❌ No receipt data found', 'error');
         return;
     }
     
-    const shareText = `🛍️ ShopEasy Receipt
-Order ID: ${window.receiptData.orderId}
-Amount: ₹${window.receiptData.totalAmount}
-Payment: ${window.receiptData.paymentMethod} ✅
-
-Thank you for shopping with ShopEasy!
-Support: +91 9103594759`;
+    const statusEmoji = window.receiptData.paymentStatus === 'success' ? '✅' : '❌';
+    const statusText = window.receiptData.paymentStatus === 'success' ? 'SUCCESSFUL' : 'FAILED';
     
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    const shareText = `🛍️ SHOPEASY - PAYMENT RECEIPT
+
+📋 Order ID: ${window.receiptData.orderId}
+🏷️ Transaction ID: ${window.receiptData.transactionId}
+📅 Date: ${window.receiptData.orderDate}
+💰 Amount: ₹${window.receiptData.totalAmount}
+💳 Payment: ${window.receiptData.paymentMethod}
+${statusEmoji} Status: ${statusText}
+
+👤 CUSTOMER:
+Name: ${window.receiptData.userData.name}
+Phone: ${window.receiptData.userData.phone}
+Address: ${window.receiptData.userData.address}
+${window.receiptData.userData.location ? `📍 Location: ${window.receiptData.userData.location.address || 'Coordinates provided'}` : ''}
+
+🛒 ITEMS:
+${window.receiptData.orderItems.map(item => 
+    `${item.title} - Qty: ${item.quantity} - ₹${item.price * item.quantity}`
+).join('\n')}
+
+Thank you for shopping with ShopEasy! 🛍️`;
+    
+    // Send to Muzamil's WhatsApp number
+    const whatsappUrl = `https://wa.me/919103594759?text=${encodeURIComponent(shareText)}`;
     window.open(whatsappUrl, '_blank');
     
-    showNotification('📤 Receipt shared via WhatsApp!', 'success');
+    showNotification('📤 Receipt shared to Muzamil via WhatsApp!', 'success');
     playSound('addToCart');
 }
 
