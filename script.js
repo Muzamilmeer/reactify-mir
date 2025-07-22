@@ -2088,6 +2088,7 @@ function toggleChat() {
     const chatWidget = document.getElementById('chat-widget');
     const chatBody = document.getElementById('chat-body');
     const chatToggleIcon = document.getElementById('chat-toggle-icon');
+    const chatFloatBtn = document.getElementById('chat-float-btn');
     
     if (chatWidget.classList.contains('minimized')) {
         // Expand
@@ -2098,13 +2099,15 @@ function toggleChat() {
         }
         chatOpen = true;
     } else {
-        // Minimize (but keep widget available)
-        chatWidget.classList.add('minimized');
-        chatBody.style.display = 'none';
-        if (chatToggleIcon) {
-            chatToggleIcon.className = 'fas fa-chevron-down';
+        // Close completely - hide entire widget including header
+        chatWidget.style.display = 'none';
+        chatWidget.classList.remove('open', 'minimized');
+        
+        // Show floating button if exists
+        if (chatFloatBtn) {
+            chatFloatBtn.style.display = 'block';
         }
-        // Don't hide the widget completely - keep it minimized
+        
         chatOpen = false;
     }
     
