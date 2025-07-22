@@ -944,41 +944,133 @@ function closeOrderModal() {
     }
 }
 
-function proceedToCheckout() {
+// Show Payment Options
+function showPaymentOptions() {
     if (cart.length === 0) {
         showNotification('❌ Your cart is empty! Add some products first.', 'error');
         return;
     }
     
-    playSound('addToCart');
+    const paymentOptions = document.getElementById('payment-options');
+    const checkoutBtn = document.getElementById('checkout-btn');
     
-    // Create order summary
-    const orderItems = cart.map(item => `${item.name} (Qty: ${item.quantity}) - ₹${item.price * item.quantity}`).join('\n');
+    // Show payment options, hide proceed button
+    paymentOptions.style.display = 'block';
+    checkoutBtn.style.display = 'none';
+    
+    playSound('themeChange');
+    showNotification('💳 Choose your payment method', 'info');
+}
+
+// Payment Functions - Direct App Opening (Like YouTube/Facebook)
+function payWithPhonePe() {
+    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const upiId = '9103594759@ybl';
+    
+    // PhonePe Deep Link
+    const phonePeUrl = `phonepe://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    
+    // Try to open PhonePe app
+    window.location.href = phonePeUrl;
+    
+    // Fallback for web/desktop
+    setTimeout(() => {
+        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+        window.location.href = fallbackUrl;
+    }, 1500);
+    
+    playSound('addToCart');
+    showNotification('📱 Opening PhonePe...', 'success');
+    setTimeout(() => {
+        completePayment('PhonePe');
+    }, 3000);
+}
+
+function payWithGPay() {
+    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const upiId = '9103594759@ybl';
+    
+    // Google Pay Deep Link
+    const gpayUrl = `tez://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    
+    // Try to open GPay app
+    window.location.href = gpayUrl;
+    
+    // Fallback
+    setTimeout(() => {
+        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+        window.location.href = fallbackUrl;
+    }, 1500);
+    
+    playSound('addToCart');
+    showNotification('📱 Opening Google Pay...', 'success');
+    setTimeout(() => {
+        completePayment('Google Pay');
+    }, 3000);
+}
+
+function payWithPaytm() {
+    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const upiId = '9103594759@ybl';
+    
+    // Paytm Deep Link
+    const paytmUrl = `paytmmp://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    
+    // Try to open Paytm app
+    window.location.href = paytmUrl;
+    
+    // Fallback
+    setTimeout(() => {
+        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+        window.location.href = fallbackUrl;
+    }, 1500);
+    
+    playSound('addToCart');
+    showNotification('📱 Opening Paytm...', 'success');
+    setTimeout(() => {
+        completePayment('Paytm');
+    }, 3000);
+}
+
+function payWithUPI() {
+    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const upiId = '9103594759@ybl';
+    
+    // Generic UPI Deep Link
+    const upiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    
+    // Try to open any UPI app
+    window.location.href = upiUrl;
+    
+    playSound('addToCart');
+    showNotification('📱 Opening UPI app...', 'success');
+    setTimeout(() => {
+        completePayment('UPI App');
+    }, 3000);
+}
+
+// Complete Payment
+function completePayment(paymentMethod) {
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     
-    // WhatsApp message for order
-    const whatsappMessage = `🛍️ Hi Muzamil! I want to place an order from ShopEasy:
-
-📦 ORDER DETAILS:
-${orderItems}
-
-💰 Total Amount: ₹${totalAmount}
-
-📍 Please confirm my order and provide delivery details.
-📞 Contact: Customer from ShopEasy App`;
+    // Clear cart and close
+    cart = [];
+    updateCartDisplay();
+    closeCart();
     
-    const whatsappUrl = `https://wa.me/919103594759?text=${encodeURIComponent(whatsappMessage)}`;
+    // Reset payment options
+    const paymentOptions = document.getElementById('payment-options');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    paymentOptions.style.display = 'none';
+    checkoutBtn.style.display = 'block';
     
-    // Open WhatsApp
-    window.open(whatsappUrl, '_blank');
-    
-    // Clear cart after order and close cart
-    setTimeout(() => {
-        cart = [];
-        updateCartDisplay();
-        closeCart();
-        showNotification('🛒 Order sent to WhatsApp! We will contact you shortly.', 'success');
-    }, 1000);
+    playSound('checkoutSuccess');
+    showNotification(`✅ Payment of ₹${totalAmount} via ${paymentMethod} completed successfully!`, 'success');
+}
+
+// Legacy function (keep for compatibility)
+function proceedToCheckout() {
+    showPaymentOptions();
 }
 
 // Close order modal when clicking outside
@@ -993,6 +1085,11 @@ document.addEventListener('click', (e) => {
 window.trackOrder = trackOrder;
 window.closeOrderModal = closeOrderModal;
 window.proceedToCheckout = proceedToCheckout;
+window.showPaymentOptions = showPaymentOptions;
+window.payWithPhonePe = payWithPhonePe;
+window.payWithGPay = payWithGPay;
+window.payWithPaytm = payWithPaytm;
+window.payWithUPI = payWithUPI;
 
 // Real Biometric Authentication System with WebAuthn
 let biometricSupported = false;

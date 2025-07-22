@@ -1339,6 +1339,67 @@ body {
     transform: translateY(-2px);
 }
 
+/* Payment Options Styles */
+.payment-options {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: rgba(103, 126, 234, 0.1);
+    border-radius: 12px;
+    border: 2px solid rgba(103, 126, 234, 0.2);
+}
+
+.payment-options h4 {
+    margin: 0 0 1rem 0;
+    text-align: center;
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+
+.payment-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.payment-btn {
+    padding: 12px 8px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.payment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.payment-btn.phonepe {
+    background: linear-gradient(135deg, #5F2C82, #49A09D);
+    color: white;
+}
+
+.payment-btn.gpay {
+    background: linear-gradient(135deg, #4285F4, #34A853);
+    color: white;
+}
+
+.payment-btn.paytm {
+    background: linear-gradient(135deg, #002970, #00BAF2);
+    color: white;
+}
+
+.payment-btn.upi {
+    background: linear-gradient(135deg, #FF6B35, #F7931E);
+    color: white;
+}
+
 .track-order-btn {
     width: 100%;
     background: linear-gradient(135deg, #25D366, #128C7E, #075E54);
