@@ -370,7 +370,24 @@ function initializeEventListeners() {
     // Cart functionality
     document.getElementById('cart-btn').addEventListener('click', openCart);
     document.getElementById('close-cart').addEventListener('click', closeCart);
-    document.getElementById('cart-overlay').addEventListener('click', closeCart);
+    document.getElementById('cart-overlay').addEventListener('click', function(e) {
+        // Don't close cart if clicking on form elements or payment options
+        const userForm = document.getElementById('user-details-form');
+        const paymentOptions = document.getElementById('payment-options');
+        
+        // Check if form or payment options are visible
+        const formVisible = userForm && userForm.style.display !== 'none';
+        const paymentVisible = paymentOptions && paymentOptions.style.display !== 'none';
+        
+        // If form or payment is visible, don't close cart on overlay click
+        if (formVisible || paymentVisible) {
+            console.log('🛒 Cart overlay clicked but form/payment visible - not closing cart');
+            return;
+        }
+        
+        // Otherwise close cart normally
+        closeCart();
+    });
     
     // Search functionality
     document.getElementById('search-input').addEventListener('input', (e) => {
@@ -743,8 +760,20 @@ document.addEventListener('keydown', (e) => {
         document.getElementById('search-input').focus();
     }
     
-    // Escape to close cart
+    // Escape to close cart (but not during form/payment)
     if (e.key === 'Escape') {
+        // Don't close cart if form or payment options are visible
+        const userForm = document.getElementById('user-details-form');
+        const paymentOptions = document.getElementById('payment-options');
+        
+        const formVisible = userForm && userForm.style.display !== 'none';
+        const paymentVisible = paymentOptions && paymentOptions.style.display !== 'none';
+        
+        if (formVisible || paymentVisible) {
+            console.log('🛒 ESC pressed but form/payment visible - not closing cart');
+            return;
+        }
+        
         closeCart();
     }
 });
@@ -972,6 +1001,46 @@ function showPaymentOptions() {
     
     playSound('themeChange');
     // showNotification('📝 Please fill your details to continue', 'info'); // Removed popup
+    
+    // Prevent form clicks from closing cart
+    setTimeout(() => {
+        // Protect form containers
+        const formContainer = document.getElementById('user-details-form');
+        const paymentContainer = document.getElementById('payment-options');
+        
+        if (formContainer) {
+            formContainer.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🛒 Form container clicked - preventing cart close');
+            });
+        }
+        
+        if (paymentContainer) {
+            paymentContainer.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('🛒 Payment container clicked - preventing cart close');
+            });
+        }
+        
+        // Protect individual form elements
+        const formElements = document.querySelectorAll('#user-details-form input, #user-details-form textarea, #user-details-form button, #payment-options button');
+        formElements.forEach(element => {
+            element.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent click from bubbling to overlay
+                console.log('🛒 Form element clicked - preventing cart close');
+            });
+        });
+        
+        // Also protect cart sidebar to prevent accidental close
+        const cartSidebar = document.getElementById('cart-sidebar');
+        if (cartSidebar) {
+            cartSidebar.addEventListener('click', function(e) {
+                // Only stop propagation, don't prevent default
+                e.stopPropagation();
+                console.log('🛒 Cart sidebar clicked - preventing overlay close');
+            });
+        }
+    }, 100);
 }
 
 // Get Live Location with Address - Enhanced Detection
