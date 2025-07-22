@@ -2084,31 +2084,65 @@ function openChat() {
     playSound('themeChange');
 }
 
-function toggleChat() {
+// New Chat Control Functions
+function minimizeChat() {
     const chatWidget = document.getElementById('chat-widget');
     const chatBody = document.getElementById('chat-body');
-    const chatToggleIcon = document.getElementById('chat-toggle-icon');
+    const minimizeBtn = document.getElementById('minimize-btn');
+    const maximizeBtn = document.getElementById('maximize-btn');
     
-    if (chatWidget.classList.contains('minimized')) {
-        // Expand
-        chatWidget.classList.remove('minimized');
-        chatBody.style.display = 'flex';
-        if (chatToggleIcon) {
-            chatToggleIcon.className = 'fas fa-chevron-up';
-        }
-        chatOpen = true;
-    } else {
-        // Minimize (but keep widget available)
-        chatWidget.classList.add('minimized');
-        chatBody.style.display = 'none';
-        if (chatToggleIcon) {
-            chatToggleIcon.className = 'fas fa-chevron-down';
-        }
-        // Don't hide the widget completely - keep it minimized
-        chatOpen = false;
+    // Minimize chat - hide body but keep header
+    chatWidget.classList.add('minimized');
+    chatBody.style.display = 'none';
+    minimizeBtn.style.display = 'none';
+    maximizeBtn.style.display = 'flex';
+    
+    chatOpen = false;
+    playSound('themeChange');
+}
+
+function maximizeChat() {
+    const chatWidget = document.getElementById('chat-widget');
+    const chatBody = document.getElementById('chat-body');
+    const minimizeBtn = document.getElementById('minimize-btn');
+    const maximizeBtn = document.getElementById('maximize-btn');
+    
+    // Maximize chat - show body again
+    chatWidget.classList.remove('minimized');
+    chatBody.style.display = 'flex';
+    minimizeBtn.style.display = 'flex';
+    maximizeBtn.style.display = 'none';
+    
+    chatOpen = true;
+    playSound('themeChange');
+}
+
+function closeChat() {
+    const chatWidget = document.getElementById('chat-widget');
+    const chatFloatBtn = document.getElementById('chat-float-btn');
+    
+    // Close chat completely
+    chatWidget.style.display = 'none';
+    chatWidget.classList.remove('open', 'minimized');
+    
+    // Show floating button if exists
+    if (chatFloatBtn) {
+        chatFloatBtn.style.display = 'block';
     }
     
+    chatOpen = false;
     playSound('themeChange');
+}
+
+// Legacy function for backward compatibility
+function toggleChat() {
+    const chatWidget = document.getElementById('chat-widget');
+    
+    if (chatWidget.classList.contains('minimized')) {
+        maximizeChat();
+    } else {
+        minimizeChat();
+    }
 }
 
 function sendMessage() {
@@ -2937,6 +2971,9 @@ window.resetAppSecurity = resetAppSecurity;
 window.contactSupport = contactSupport;
 window.openChat = openChat;
 window.toggleChat = toggleChat;
+window.minimizeChat = minimizeChat;
+window.maximizeChat = maximizeChat;
+window.closeChat = closeChat;
 window.sendMessage = sendMessage;
 window.sendQuickReply = sendQuickReply;
 
