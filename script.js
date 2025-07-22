@@ -648,7 +648,7 @@ function closeCart() {
 
 function checkout() {
     if (cart.length === 0) {
-        alert('Your cart is empty!');
+        // alert('Your cart is empty!'); // Removed alert
         return;
     }
     
@@ -662,7 +662,7 @@ function checkout() {
     checkoutBtn.disabled = true;
     
     setTimeout(() => {
-        alert(`Order placed successfully!\nTotal: ₹${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString('en-IN')}\nThank you for shopping with ShopEasy!`);
+        // alert(`Order placed successfully!\nTotal: ₹${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString('en-IN')}\nThank you for shopping with ShopEasy!`); // Removed alert
         
         // Clear cart
         cart = [];
@@ -792,12 +792,12 @@ function toggleTheme() {
             document.body.setAttribute('data-theme', 'dark');
             themeIcon.className = 'fas fa-sun';
             currentTheme = 'dark';
-            showNotification('🌙 Dark mode enabled', 'theme');
+            // showNotification('🌙 Dark mode enabled', 'theme'); // Removed popup
         } else {
             document.body.removeAttribute('data-theme');
             themeIcon.className = 'fas fa-moon';
             currentTheme = 'light';
-            showNotification('☀️ Light mode enabled', 'theme');
+            // showNotification('☀️ Light mode enabled', 'theme'); // Removed popup
         }
         
         themeIcon.parentElement.classList.remove('rotating');
@@ -815,14 +815,14 @@ function toggleWishlist(productId) {
         wishlistBtn.classList.remove('active');
         wishlistBtn.innerHTML = '<i class="far fa-heart"></i>';
         playSound('wishlistRemove');
-        showNotification(`💔 ${product.title} removed from wishlist`, 'wishlist');
+        // showNotification(`💔 ${product.title} removed from wishlist`, 'wishlist'); // Removed popup
     } else {
         // Add to wishlist
         wishlist.push(product);
         wishlistBtn.classList.add('active');
         wishlistBtn.innerHTML = '<i class="fas fa-heart"></i>';
         playSound('wishlistAdd');
-        showNotification(`💖 ${product.title} added to wishlist`, 'wishlist');
+        // showNotification(`💖 ${product.title} added to wishlist`, 'wishlist'); // Removed popup
     }
 }
 
@@ -971,7 +971,7 @@ function showPaymentOptions() {
     }
     
     playSound('themeChange');
-    showNotification('📝 Please fill your details to continue', 'info');
+    // showNotification('📝 Please fill your details to continue', 'info'); // Removed popup
 }
 
 // Get Live Location with Address
@@ -980,7 +980,7 @@ function getLiveLocation() {
     
     if (!navigator.geolocation) {
         locationStatus.textContent = '❌ Geolocation not supported';
-        showNotification('❌ Location not supported on this device', 'error');
+        // showNotification('❌ Location not supported on this device', 'error'); // Removed popup
         return;
     }
     
@@ -1006,8 +1006,8 @@ function getLiveLocation() {
                         timestamp: new Date().toISOString()
                     };
                     
-                    showNotification('✅ Live location and address captured!', 'success');
-                    playSound('addToCart');
+                                // showNotification('✅ Live location and address captured!', 'success'); // Removed popup
+            playSound('addToCart');
                 })
                 .catch(error => {
                     console.error('Address lookup failed:', error);
@@ -1020,13 +1020,13 @@ function getLiveLocation() {
                         timestamp: new Date().toISOString()
                     };
                     
-                    showNotification('✅ Location captured (address lookup failed)', 'success');
+                    // showNotification('✅ Location captured (address lookup failed)', 'success'); // Removed popup
                     playSound('addToCart');
                 });
         },
         function(error) {
             locationStatus.textContent = '❌ Location access denied';
-            showNotification('❌ Please allow location access', 'error');
+            // showNotification('❌ Please allow location access', 'error'); // Removed popup
             console.error('Geolocation error:', error);
         },
         {
@@ -1063,7 +1063,8 @@ function proceedWithPayment() {
     const email = document.getElementById('user-email').value.trim();
     
     if (!name || !phone || !address) {
-        showNotification('❌ Please fill all required fields', 'error');
+        // showNotification('❌ Please fill all required fields', 'error'); // Removed popup
+        alert('Please fill all required fields: Name, Phone, and Address');
         return;
     }
     
@@ -1087,7 +1088,7 @@ function proceedWithPayment() {
     paymentOptions.style.display = 'block';
     
     playSound('themeChange');
-    showNotification('💳 Now choose your payment method', 'success');
+    // showNotification('💳 Now choose your payment method', 'success'); // Removed popup
 }
 
 // Smart Payment Status Detection
@@ -1295,7 +1296,7 @@ function confirmPaymentStatus(isSuccess, paymentMethod, transactionId) {
 // Retry Payment
 function retryPayment(paymentMethod) {
     closeVerificationModal();
-    showNotification('Please try the payment again', 'info');
+    // showNotification('Please try the payment again', 'info'); // Removed popup
     // User can click payment button again
 }
 
@@ -1344,7 +1345,7 @@ function payWithPhonePe() {
     }, 1500);
     
     playSound('addToCart');
-    showNotification('📱 Opening PhonePe...', 'success');
+    // showNotification('📱 Opening PhonePe...', 'success'); // Removed popup
     
     // Show payment status dialog after app redirect
     setTimeout(() => {
@@ -1380,7 +1381,7 @@ function payWithGPay() {
     }, 1500);
     
     playSound('addToCart');
-    showNotification('📱 Opening Google Pay...', 'success');
+    // showNotification('📱 Opening Google Pay...', 'success'); // Removed popup
     setTimeout(() => {
         showPaymentStatusDialog('Google Pay', transactionId);
     }, 5000);
@@ -1403,7 +1404,7 @@ function payWithPaytm() {
     }, 1500);
     
     playSound('addToCart');
-    showNotification('📱 Opening Paytm...', 'success');
+    // showNotification('📱 Opening Paytm...', 'success'); // Removed popup
     setTimeout(() => {
         completePayment('Paytm');
     }, 3000);
@@ -1420,7 +1421,7 @@ function payWithUPI() {
     window.location.href = upiUrl;
     
     playSound('addToCart');
-    showNotification('📱 Opening UPI app...', 'success');
+    // showNotification('📱 Opening UPI app...', 'success'); // Removed popup
     setTimeout(() => {
         completePayment('UPI App');
     }, 3000);
@@ -1458,10 +1459,10 @@ function completePayment(paymentMethod, paymentStatus = 'success', transactionId
     // Play appropriate sound
     if (paymentStatus === 'success') {
         playSound('checkoutSuccess');
-        showNotification(`✅ Payment of ₹${totalAmount} via ${paymentMethod} completed successfully!`, 'success');
+        // showNotification(`✅ Payment of ₹${totalAmount} via ${paymentMethod} completed successfully!`, 'success'); // Removed popup
     } else {
         playSound('error');
-        showNotification(`❌ Payment of ₹${totalAmount} via ${paymentMethod} failed!`, 'error');
+        // showNotification(`❌ Payment of ₹${totalAmount} via ${paymentMethod} failed!`, 'error'); // Removed popup
     }
 }
 
@@ -1635,7 +1636,7 @@ Support: +91 9103594759 | muzamilmeer@gmail.com
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
     
-    showNotification('📥 Receipt downloaded successfully!', 'success');
+    // showNotification('📥 Receipt downloaded successfully!', 'success'); // Removed popup
     playSound('addToCart');
 }
 
@@ -1675,7 +1676,7 @@ Thank you for shopping with ShopEasy! 🛍️`;
     const whatsappUrl = `https://wa.me/919103594759?text=${encodeURIComponent(shareText)}`;
     window.open(whatsappUrl, '_blank');
     
-    showNotification('📤 Receipt shared to Muzamil via WhatsApp!', 'success');
+    // showNotification('📤 Receipt shared to Muzamil via WhatsApp!', 'success'); // Removed popup
     playSound('addToCart');
 }
 
