@@ -1208,13 +1208,33 @@ function getLiveLocation() {
     });
     
     if (!hasGeolocation) {
-        locationStatus.textContent = '❌ Location not available in this browser';
+        locationStatus.innerHTML = `
+            <div style="color: #e74c3c; margin: 10px 0;">
+                <strong>❌ Browser Not Supported</strong><br>
+                <small style="color: #666;">This browser doesn't support location</small><br>
+                <small style="color: #666;">• Try Chrome, Firefox, or Safari</small><br>
+                <small style="color: #666;">• Or enter address manually</small><br>
+                <button onclick="useManualLocation()" style="margin-top: 8px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                    📝 Manual Entry
+                </button>
+            </div>
+        `;
         console.error('Geolocation API not available');
         return;
     }
     
     if (!isSecureContext && location.hostname !== 'localhost') {
-        locationStatus.textContent = '⚠️ Location requires HTTPS (use manual address)';
+        locationStatus.innerHTML = `
+            <div style="color: #f39c12; margin: 10px 0;">
+                <strong>⚠️ HTTPS Required for Location</strong><br>
+                <small style="color: #666;">Location needs secure connection</small><br>
+                <small style="color: #666;">• Use HTTPS version of site</small><br>
+                <small style="color: #666;">• Or enter address manually</small><br>
+                <button onclick="useManualLocation()" style="margin-top: 8px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                    📝 Manual Entry
+                </button>
+            </div>
+        `;
         console.warn('Geolocation requires secure context (HTTPS)');
         return;
     }
@@ -1226,7 +1246,18 @@ function getLiveLocation() {
         navigator.permissions.query({name: 'geolocation'}).then(function(result) {
             console.log('📍 Geolocation permission:', result.state);
             if (result.state === 'denied') {
-                locationStatus.textContent = '❌ Location permission denied by user';
+                locationStatus.innerHTML = `
+                    <div style="color: #e74c3c; margin: 10px 0;">
+                        <strong>❌ Location Permission Denied</strong><br>
+                        <small style="color: #666;">To enable location:</small><br>
+                        <small style="color: #666;">• Click 🔒 in address bar</small><br>
+                        <small style="color: #666;">• Allow location access</small><br>
+                        <small style="color: #666;">• Refresh page & try again</small><br>
+                        <button onclick="showLocationHelp()" style="margin-top: 8px; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                            📱 Show Help
+                        </button>
+                    </div>
+                `;
                 return;
             }
             
@@ -1295,13 +1326,38 @@ function requestLocation(locationStatus) {
             let errorMessage = '❌ Location error';
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    errorMessage = '❌ Location permission denied';
+                    locationStatus.innerHTML = `
+                        <div style="color: #e74c3c; margin: 10px 0;">
+                            <strong>❌ Location Access Blocked</strong><br>
+                            <small style="color: #666;">Browser blocked location access</small><br>
+                            <small style="color: #666;">• Check browser settings</small><br>
+                            <small style="color: #666;">• Try manual address instead</small><br>
+                            <button onclick="useManualLocation()" style="margin-top: 8px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                📝 Enter Manually
+                            </button>
+                        </div>
+                    `;
+                    return; // Don't set generic error message
                     break;
                 case error.POSITION_UNAVAILABLE:
                     errorMessage = '❌ Location unavailable';
                     break;
                 case error.TIMEOUT:
-                    errorMessage = '❌ Location request timed out';
+                    locationStatus.innerHTML = `
+                        <div style="color: #f39c12; margin: 10px 0;">
+                            <strong>⏱️ Location Request Timed Out</strong><br>
+                            <small style="color: #666;">GPS signal taking too long</small><br>
+                            <small style="color: #666;">• Try again in better signal area</small><br>
+                            <small style="color: #666;">• Or use manual address entry</small><br>
+                            <button onclick="getLiveLocation()" style="margin: 8px 5px 0 0; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                🔄 Try Again
+                            </button>
+                            <button onclick="useManualLocation()" style="margin-top: 8px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                📝 Manual Entry
+                            </button>
+                        </div>
+                    `;
+                    return;
                     break;
                 default:
                     errorMessage = '❌ Unknown location error';
@@ -1375,6 +1431,79 @@ function useManualLocation() {
         console.log('✅ Manual location entered:', manualAddress.trim());
     } else {
         locationStatus.textContent = '❌ Manual entry cancelled';
+    }
+}
+
+// Show Location Help Dialog
+function showLocationHelp() {
+    const helpModal = document.createElement('div');
+    helpModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    `;
+    
+    helpModal.innerHTML = `
+        <div style="background: white; border-radius: 15px; padding: 2rem; max-width: 400px; margin: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);">
+            <h3 style="margin: 0 0 1rem 0; color: #333; text-align: center;">📍 Enable Location Access</h3>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: #3498db; margin: 0 0 0.5rem 0;">🖥️ Desktop Browser:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    1. Click the 🔒 lock icon in address bar<br>
+                    2. Set "Location" to "Allow"<br>
+                    3. Refresh page and try again
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: #e74c3c; margin: 0 0 0.5rem 0;">📱 Mobile Browser:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    1. Open browser settings<br>
+                    2. Find "Site Permissions"<br>
+                    3. Allow location for this site<br>
+                    4. Reload page
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: #27ae60; margin: 0 0 0.5rem 0;">✋ Alternative:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    Use "Manual Entry" button to type your address manually
+                </p>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="closeLocationHelp()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    Got It! 👍
+                </button>
+            </div>
+        </div>
+    `;
+    
+    helpModal.onclick = function(e) {
+        if (e.target === helpModal) {
+            closeLocationHelp();
+        }
+    };
+    
+    document.body.appendChild(helpModal);
+    window.locationHelpModal = helpModal;
+}
+
+// Close Location Help
+function closeLocationHelp() {
+    if (window.locationHelpModal) {
+        document.body.removeChild(window.locationHelpModal);
+        window.locationHelpModal = null;
     }
 }
 
