@@ -1237,6 +1237,15 @@ function proceedWithPayment() {
     userDetailsForm.style.display = 'none';
     paymentOptions.style.display = 'block';
     
+    // Ensure cart stays open when showing payment options
+    const cartSidebar = document.getElementById('cart-sidebar');
+    const cartOverlay = document.getElementById('cart-overlay');
+    if (cartSidebar && !cartSidebar.classList.contains('open')) {
+        cartSidebar.classList.add('open');
+        cartOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
     playSound('themeChange');
     // showNotification('💳 Now choose your payment method', 'success'); // Removed popup
 }
@@ -1433,9 +1442,15 @@ Thank you!`;
     const whatsappUrl = `https://wa.me/919103594759?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     
-    // Show waiting message
+    // Show waiting message but keep cart open
     closeVerificationModal();
     showWaitingForVerification(paymentMethod, transactionId);
+    
+    // Make sure cart stays open during verification
+    const cartSidebar = document.getElementById('cart-sidebar');
+    if (cartSidebar && !cartSidebar.classList.contains('open')) {
+        cartSidebar.classList.add('open');
+    }
 }
 
 // Show waiting for verification message
@@ -1489,6 +1504,17 @@ function proceedWithoutVerification(paymentMethod, transactionId) {
     // Show self-confirmation modal
     const isSuccess = confirm('Did you actually complete the payment?\n\nClick OK only if money was deducted from your account.');
     completePayment(paymentMethod, isSuccess ? 'success' : 'failed', transactionId);
+    
+    // Keep cart open if payment failed
+    if (!isSuccess) {
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
+        if (cartSidebar) {
+            cartSidebar.classList.add('open');
+            cartOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
 }
 
 // Cancel payment
@@ -1498,6 +1524,15 @@ function cancelPayment(paymentMethod, transactionId) {
     
     // Generate failed receipt
     completePayment(paymentMethod, 'failed', transactionId);
+    
+    // Keep cart open since payment was cancelled
+    const cartSidebar = document.getElementById('cart-sidebar');
+    const cartOverlay = document.getElementById('cart-overlay');
+    if (cartSidebar) {
+        cartSidebar.classList.add('open');
+        cartOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 // Close waiting modal
@@ -1753,10 +1788,15 @@ function completePayment(paymentMethod, paymentStatus = 'success', transactionId
     // Generate receipt with payment status
     generateReceipt(orderItems, totalAmount, paymentMethod, paymentStatus, finalTransactionId);
     
-    // Clear cart and close
-    cart = [];
-    updateCartUI();
-    closeCart();
+    // Clear cart only on successful payment, keep cart open otherwise
+    if (paymentStatus === 'success') {
+        cart = [];
+        updateCartUI();
+        closeCart();
+    } else {
+        // Keep cart open for failed payments so user can try again
+        console.log('Payment failed - keeping cart open for retry');
+    }
     
     // Reset forms and options
     const userDetailsForm = document.getElementById('user-details-form');
@@ -1767,9 +1807,14 @@ function completePayment(paymentMethod, paymentStatus = 'success', transactionId
     if (paymentOptions) paymentOptions.style.display = 'none';
     if (checkoutBtn) checkoutBtn.style.display = 'block';
     
-    // Clear form
-    document.getElementById('checkout-form').reset();
-    document.getElementById('location-status').textContent = '';
+    // Clear form only on successful payment
+    if (paymentStatus === 'success') {
+        document.getElementById('checkout-form').reset();
+        document.getElementById('location-status').textContent = '';
+    } else {
+        // Keep form data for retry on failed payments
+        console.log('Payment failed - keeping form data for retry');
+    }
     
     // Play appropriate sound
     if (paymentStatus === 'success') {
