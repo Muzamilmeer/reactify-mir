@@ -904,7 +904,7 @@ function showNotification(message, type = 'info') {
     // Auto remove after 3 seconds
     setTimeout(() => {
         notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
+        setTimeout(() => notification.remove(), 3000);
     }, 3000);
     
     // Close button
