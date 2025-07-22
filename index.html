@@ -127,7 +127,7 @@
                 <div class="cart-total">
                     <strong>Total: ₹<span id="cart-total">0</span></strong>
                 </div>
-                <button class="checkout-btn" onclick="proceedToCheckout()">Proceed to Checkout</button>
+                <button class="checkout-btn" onclick="showPaymentOptions()">Proceed to Checkout</button>
                 <button class="track-order-btn" onclick="trackOrder()">
                     <i class="fas fa-map-marker-alt"></i> Track Your Order
                 </button>
@@ -136,6 +136,96 @@
 
         <!-- Cart Overlay -->
         <div class="cart-overlay" id="cart-overlay"></div>
+
+        <!-- Payment Modal -->
+        <div class="payment-modal" id="payment-modal">
+            <div class="payment-content">
+                <div class="payment-header">
+                    <h3><i class="fas fa-credit-card"></i> Choose Payment Method</h3>
+                    <button class="close-payment" onclick="closePaymentModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="order-summary">
+                    <h4>Order Summary</h4>
+                    <div class="order-items" id="payment-order-items"></div>
+                    <div class="order-total">
+                        <strong>Total Amount: ₹<span id="payment-total">0</span></strong>
+                    </div>
+                </div>
+
+                <div class="payment-methods">
+                    <h4>Select Payment Method:</h4>
+                    
+                    <div class="payment-options">
+                        <button class="payment-option phonepe" onclick="initiatePayment('phonepe')">
+                            <img src="https://logoeps.com/wp-content/uploads/2013/03/phonepe-vector-logo.png" alt="PhonePe">
+                            <span>PhonePe</span>
+                        </button>
+                        
+                        <button class="payment-option gpay" onclick="initiatePayment('gpay')">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Google_Pay_Logo.png" alt="Google Pay">
+                            <span>Google Pay</span>
+                        </button>
+                        
+                        <button class="payment-option paytm" onclick="initiatePayment('paytm')">
+                            <img src="https://logoeps.com/wp-content/uploads/2013/03/paytm-vector-logo.png" alt="Paytm">
+                            <span>Paytm</span>
+                        </button>
+                        
+                        <button class="payment-option upi" onclick="initiatePayment('upi')">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI">
+                            <span>Any UPI App</span>
+                        </button>
+                        
+                        <button class="payment-option cod" onclick="initiatePayment('cod')">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Cash on Delivery</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="payment-note">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Your payment is 100% secure and encrypted</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Processing Modal -->
+        <div class="processing-modal" id="processing-modal">
+            <div class="processing-content">
+                <div class="spinner"></div>
+                <h3>Processing Payment...</h3>
+                <p>Please wait while we process your payment securely.</p>
+            </div>
+        </div>
+
+        <!-- Receipt Modal -->
+        <div class="receipt-modal" id="receipt-modal">
+            <div class="receipt-content">
+                <div class="receipt-header">
+                    <h3><i class="fas fa-receipt"></i> Payment Receipt</h3>
+                    <button class="close-receipt" onclick="closeReceiptModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="receipt-body" id="receipt-body">
+                    <!-- Receipt content will be generated here -->
+                </div>
+                
+                <div class="receipt-actions">
+                    <button class="download-receipt" onclick="downloadReceipt()">
+                        <i class="fas fa-download"></i> Download Receipt
+                    </button>
+                    <button class="share-receipt" onclick="shareReceipt()">
+                        <i class="fas fa-share"></i> Share Receipt
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Biometric Login Modal -->
         <div class="modal-overlay" id="biometric-modal-overlay">

@@ -2964,3 +2964,424 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// ===============================
+// PAYMENT SYSTEM
+// ===============================
+
+const MERCHANT_UPI_ID = '9103594759@ybl';
+let currentOrder = null;
+
+// Show Payment Options Modal
+function showPaymentOptions() {
+    if (cart.length === 0) {
+        alert('Your cart is empty! Please add some items first.');
+        return;
+    }
+    
+    // Calculate total
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Store current order
+    currentOrder = {
+        id: generateOrderId(),
+        items: [...cart],
+        total: total,
+        timestamp: new Date(),
+        status: 'pending'
+    };
+    
+    // Update payment modal content
+    updatePaymentModal();
+    
+    // Show modal
+    const paymentModal = document.getElementById('payment-modal');
+    paymentModal.classList.add('active');
+    
+    // Close cart
+    closeCart();
+}
+
+// Update Payment Modal Content
+function updatePaymentModal() {
+    const orderItemsContainer = document.getElementById('payment-order-items');
+    const totalElement = document.getElementById('payment-total');
+    
+    // Clear previous items
+    orderItemsContainer.innerHTML = '';
+    
+    // Add order items
+    currentOrder.items.forEach(item => {
+        const orderItem = document.createElement('div');
+        orderItem.className = 'order-item';
+        orderItem.innerHTML = `
+            <div class="item-details">
+                <div class="item-name">${item.title}</div>
+                <div class="item-qty">Qty: ${item.quantity}</div>
+            </div>
+            <div class="item-price">₹${(item.price * item.quantity).toLocaleString('en-IN')}</div>
+        `;
+        orderItemsContainer.appendChild(orderItem);
+    });
+    
+    // Update total
+    totalElement.textContent = currentOrder.total.toLocaleString('en-IN');
+}
+
+// Close Payment Modal
+function closePaymentModal() {
+    const paymentModal = document.getElementById('payment-modal');
+    paymentModal.classList.remove('active');
+    currentOrder = null;
+}
+
+// Initiate Payment
+function initiatePayment(method) {
+    if (!currentOrder) {
+        alert('No active order found!');
+        return;
+    }
+    
+    // Close payment modal
+    closePaymentModal();
+    
+    // Show processing modal
+    showProcessingModal();
+    
+    // Handle different payment methods
+    switch(method) {
+        case 'phonepe':
+            redirectToPhonePe();
+            break;
+        case 'gpay':
+            redirectToGPay();
+            break;
+        case 'paytm':
+            redirectToPaytm();
+            break;
+        case 'upi':
+            redirectToUPI();
+            break;
+        case 'cod':
+            processCOD();
+            break;
+        default:
+            alert('Payment method not supported!');
+            hideProcessingModal();
+    }
+}
+
+// Redirect to PhonePe
+function redirectToPhonePe() {
+    const amount = currentOrder.total;
+    const orderId = currentOrder.id;
+    const merchantName = 'ShopEasy';
+    
+    // PhonePe UPI URL
+    const upiUrl = `phonepe://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${amount}&cu=INR&tn=Order_${orderId}`;
+    
+    // Try to open PhonePe app
+    setTimeout(() => {
+        window.location.href = upiUrl;
+        
+        // Simulate payment result after 5 seconds
+        setTimeout(() => {
+            hideProcessingModal();
+            const success = Math.random() > 0.2; // 80% success rate
+            showPaymentResult(success, 'PhonePe');
+        }, 5000);
+    }, 1000);
+}
+
+// Redirect to Google Pay
+function redirectToGPay() {
+    const amount = currentOrder.total;
+    const orderId = currentOrder.id;
+    const merchantName = 'ShopEasy';
+    
+    // Google Pay UPI URL
+    const upiUrl = `tez://upi/pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${amount}&cu=INR&tn=Order_${orderId}`;
+    
+    setTimeout(() => {
+        window.location.href = upiUrl;
+        
+        setTimeout(() => {
+            hideProcessingModal();
+            const success = Math.random() > 0.2;
+            showPaymentResult(success, 'Google Pay');
+        }, 5000);
+    }, 1000);
+}
+
+// Redirect to Paytm
+function redirectToPaytm() {
+    const amount = currentOrder.total;
+    const orderId = currentOrder.id;
+    const merchantName = 'ShopEasy';
+    
+    // Paytm UPI URL
+    const upiUrl = `paytmmp://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${amount}&cu=INR&tn=Order_${orderId}`;
+    
+    setTimeout(() => {
+        window.location.href = upiUrl;
+        
+        setTimeout(() => {
+            hideProcessingModal();
+            const success = Math.random() > 0.2;
+            showPaymentResult(success, 'Paytm');
+        }, 5000);
+    }, 1000);
+}
+
+// Redirect to Any UPI App
+function redirectToUPI() {
+    const amount = currentOrder.total;
+    const orderId = currentOrder.id;
+    const merchantName = 'ShopEasy';
+    
+    // Generic UPI URL
+    const upiUrl = `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${amount}&cu=INR&tn=Order_${orderId}`;
+    
+    setTimeout(() => {
+        window.location.href = upiUrl;
+        
+        setTimeout(() => {
+            hideProcessingModal();
+            const success = Math.random() > 0.2;
+            showPaymentResult(success, 'UPI');
+        }, 5000);
+    }, 1000);
+}
+
+// Process Cash on Delivery
+function processCOD() {
+    setTimeout(() => {
+        hideProcessingModal();
+        showPaymentResult(true, 'Cash on Delivery');
+    }, 2000);
+}
+
+// Show Processing Modal
+function showProcessingModal() {
+    const processingModal = document.getElementById('processing-modal');
+    processingModal.classList.add('active');
+}
+
+// Hide Processing Modal
+function hideProcessingModal() {
+    const processingModal = document.getElementById('processing-modal');
+    processingModal.classList.remove('active');
+}
+
+// Show Payment Result
+function showPaymentResult(success, method) {
+    currentOrder.status = success ? 'success' : 'failed';
+    currentOrder.paymentMethod = method;
+    currentOrder.transactionId = success ? generateTransactionId() : null;
+    
+    // Play sound
+    if (success) {
+        playSound('checkout');
+    } else {
+        playSound('error');
+    }
+    
+    // Generate and show receipt
+    generateReceipt(success);
+    
+    // Clear cart if payment successful
+    if (success) {
+        cart = [];
+        updateCartUI();
+    }
+}
+
+// Generate Receipt
+function generateReceipt(success) {
+    const receiptBody = document.getElementById('receipt-body');
+    const currentDate = new Date();
+    
+    receiptBody.innerHTML = `
+        <div class="receipt-header-info">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="color: var(--primary-color); margin-bottom: 5px;">
+                    <i class="fas fa-shopping-bag"></i> ShopEasy
+                </h2>
+                <p style="color: #666; font-size: 0.9rem;">Premium Shopping Experience</p>
+            </div>
+        </div>
+        
+        <div class="receipt-info">
+            <div class="receipt-section">
+                <h5>Order Details</h5>
+                <p><strong>Order ID:</strong> ${currentOrder.id}</p>
+                <p><strong>Date:</strong> ${currentDate.toLocaleDateString('en-IN')}</p>
+                <p><strong>Time:</strong> ${currentDate.toLocaleTimeString('en-IN')}</p>
+            </div>
+            
+            <div class="receipt-section">
+                <h5>Payment Info</h5>
+                <p><strong>Method:</strong> ${currentOrder.paymentMethod}</p>
+                <p><strong>Status:</strong> ${success ? 'Success' : 'Failed'}</p>
+                ${success ? `<p><strong>Transaction ID:</strong> ${currentOrder.transactionId}</p>` : ''}
+            </div>
+        </div>
+        
+        <div class="receipt-items">
+            <h5 style="color: var(--primary-color); margin-bottom: 15px;">Items Ordered</h5>
+            ${currentOrder.items.map(item => `
+                <div class="receipt-item">
+                    <div>
+                        <div style="font-weight: 500;">${item.title}</div>
+                        <div style="font-size: 0.9rem; color: #666;">Qty: ${item.quantity} × ₹${item.price.toLocaleString('en-IN')}</div>
+                    </div>
+                    <div style="font-weight: 600;">₹${(item.price * item.quantity).toLocaleString('en-IN')}</div>
+                </div>
+            `).join('')}
+            
+            <div class="receipt-item" style="border-top: 2px solid var(--primary-color); margin-top: 15px; padding-top: 15px;">
+                <div style="font-size: 1.2rem;"><strong>Total Amount</strong></div>
+                <div style="font-size: 1.2rem; color: var(--primary-color);"><strong>₹${currentOrder.total.toLocaleString('en-IN')}</strong></div>
+            </div>
+        </div>
+        
+        <div class="receipt-total">
+            <div class="receipt-status ${success ? 'success' : 'failed'}">
+                <i class="fas ${success ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                Payment ${success ? 'Successful' : 'Failed'}
+            </div>
+            ${success ? 
+                '<p style="margin-top: 15px; color: #666;">Thank you for shopping with ShopEasy! Your order will be processed shortly.</p>' :
+                '<p style="margin-top: 15px; color: #666;">Payment failed. Please try again or contact support.</p>'
+            }
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 0.9rem;">
+            <p>For support, contact us at:</p>
+            <p><i class="fab fa-whatsapp"></i> +91 9103594759</p>
+            <p><i class="fas fa-envelope"></i> support@shopeasy.com</p>
+        </div>
+    `;
+    
+    // Show receipt modal
+    const receiptModal = document.getElementById('receipt-modal');
+    receiptModal.classList.add('active');
+}
+
+// Close Receipt Modal
+function closeReceiptModal() {
+    const receiptModal = document.getElementById('receipt-modal');
+    receiptModal.classList.remove('active');
+}
+
+// Download Receipt
+function downloadReceipt() {
+    const receiptContent = document.getElementById('receipt-body').innerHTML;
+    const orderDate = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
+    
+    // Create a printable HTML
+    const printableHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt - ${currentOrder.id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .receipt-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+                .receipt-status { text-align: center; padding: 15px; border-radius: 10px; margin: 20px 0; }
+                .success { background: #d4edda; color: #155724; }
+                .failed { background: #f8d7da; color: #721c24; }
+                h2, h5 { color: #667eea; }
+            </style>
+        </head>
+        <body>
+            ${receiptContent}
+        </body>
+        </html>
+    `;
+    
+    // Create blob and download
+    const blob = new Blob([printableHTML], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ShopEasy_Receipt_${currentOrder.id}_${orderDate}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    alert('Receipt downloaded successfully!');
+}
+
+// Share Receipt
+function shareReceipt() {
+    const orderSummary = `
+🛍️ *ShopEasy Order Receipt*
+
+📋 *Order ID:* ${currentOrder.id}
+📅 *Date:* ${new Date().toLocaleDateString('en-IN')}
+💳 *Payment:* ${currentOrder.paymentMethod}
+✅ *Status:* ${currentOrder.status === 'success' ? 'Successful' : 'Failed'}
+
+*Items:*
+${currentOrder.items.map(item => `• ${item.title} (Qty: ${item.quantity}) - ₹${(item.price * item.quantity).toLocaleString('en-IN')}`).join('\n')}
+
+💰 *Total: ₹${currentOrder.total.toLocaleString('en-IN')}*
+
+Thank you for shopping with ShopEasy! 🙏
+For support: +91 9103594759
+    `;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'ShopEasy Receipt',
+            text: orderSummary
+        });
+    } else {
+        // Fallback - copy to clipboard
+        navigator.clipboard.writeText(orderSummary).then(() => {
+            alert('Receipt copied to clipboard! You can paste it anywhere to share.');
+        });
+    }
+}
+
+// Generate Order ID
+function generateOrderId() {
+    return 'SE' + Date.now().toString().slice(-6) + Math.random().toString(36).substr(2, 4).toUpperCase();
+}
+
+// Generate Transaction ID
+function generateTransactionId() {
+    return 'TXN' + Date.now().toString() + Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+// Add error sound effect
+function playErrorSound() {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.2);
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+}
+
+// Update sound effects
+const originalPlaySound = window.playSound;
+window.playSound = function(type) {
+    if (type === 'error') {
+        playErrorSound();
+    } else if (originalPlaySound) {
+        originalPlaySound(type);
+    }
+};
