@@ -1337,32 +1337,61 @@ function startSmartVerification(paymentMethod, transactionId) {
     }, 1000);
 }
 
-// Smart Detection Logic
+// Real Payment Detection - Ask User Directly
 function performSmartDetection(paymentMethod, transactionId) {
-    // Simulate smart detection based on various factors
-    const currentTime = new Date();
-    const hour = currentTime.getHours();
+    // After verification steps, show manual confirmation immediately
+    // No automatic success/failure - user must confirm
+    
+    setTimeout(() => {
+        showManualVerificationOnly(paymentMethod, transactionId);
+    }, 2000); // Reduced time for faster experience
+}
+
+// Show Manual Verification Only - No Automatic Success
+function showManualVerificationOnly(paymentMethod, transactionId) {
+    const statusDiv = document.getElementById('verification-status');
+    const resultDiv = document.getElementById('verification-result');
+    
+    statusDiv.style.display = 'none';
+    resultDiv.style.display = 'block';
+    
     const amount = window.currentTransaction?.amount || 0;
     
-    // Smart prediction algorithm
-    let successProbability = 0.85; // Base 85% success rate
-    
-    // Time-based factors
-    if (hour >= 9 && hour <= 21) successProbability += 0.1; // Business hours
-    else successProbability -= 0.2; // Off hours
-    
-    // Amount-based factors  
-    if (amount <= 100) successProbability += 0.05; // Small amounts succeed more
-    if (amount >= 1000) successProbability -= 0.1; // Large amounts may fail
-    
-    // Random realistic factors
-    const randomFactor = Math.random();
-    const isSuccess = randomFactor < successProbability;
-    
-    // Show result after brief delay
-    setTimeout(() => {
-        showVerificationResult(isSuccess, paymentMethod, transactionId, randomFactor);
-    }, 1500);
+    resultDiv.innerHTML = `
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">💳</div>
+            <h3 style="margin: 0; color: #333;">Payment Verification Required</h3>
+            <p style="margin: 0.5rem 0; color: #666;">
+                Please check your ${paymentMethod} app and confirm payment status
+            </p>
+            <p style="margin: 0.5rem 0; color: #999; font-size: 0.9rem;">
+                Amount: ₹${amount} | Transaction ID: ${transactionId}
+            </p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <p style="margin: 0; color: #666; font-size: 0.9rem; text-align: center;">
+                ⚠️ Only confirm "SUCCESS" if money was actually deducted from your account
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="confirmPaymentStatus(true, '${paymentMethod}', '${transactionId}')" 
+                style="background: #34A853; color: white; border: none; padding: 15px 20px; 
+                border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1rem;">
+                ✅ Payment Successful<br><span style="font-size: 0.8rem; opacity: 0.9;">Money was deducted</span>
+            </button>
+            <button onclick="confirmPaymentStatus(false, '${paymentMethod}', '${transactionId}')" 
+                style="background: #EA4335; color: white; border: none; padding: 15px 20px; 
+                border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1rem;">
+                ❌ Payment Failed<br><span style="font-size: 0.8rem; opacity: 0.9;">No money deducted</span>
+            </button>
+        </div>
+        
+        <p style="margin: 1rem 0 0 0; text-align: center; color: #999; font-size: 0.8rem;">
+            Check your bank balance or payment app transaction history
+        </p>
+    `;
 }
 
 // Show Verification Result
@@ -1497,10 +1526,10 @@ function payWithPhonePe() {
     playSound('addToCart');
     // showNotification('📱 Opening PhonePe...', 'success'); // Removed popup
     
-    // Show payment status dialog after app redirect
+    // Show payment status dialog after app redirect - Give user time to complete payment
     setTimeout(() => {
         showPaymentStatusDialog('PhonePe', transactionId);
-    }, 5000);
+    }, 8000); // Increased time for real payment
 }
 
 function payWithGPay() {
@@ -1534,38 +1563,60 @@ function payWithGPay() {
     // showNotification('📱 Opening Google Pay...', 'success'); // Removed popup
     setTimeout(() => {
         showPaymentStatusDialog('Google Pay', transactionId);
-    }, 5000);
+    }, 8000); // Increased time for real payment
 }
 
 function payWithPaytm() {
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     const upiId = '9103594759@ybl';
     
-    // Paytm Deep Link
-    const paytmUrl = `paytmmp://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    // Generate real-style transaction ID for Paytm
+    const transactionId = 'PT' + Date.now() + Math.random().toString(36).substr(2, 6).toUpperCase();
+    
+    // Store transaction details
+    window.currentTransaction = {
+        method: 'Paytm',
+        transactionId: transactionId,
+        amount: totalAmount,
+        startTime: new Date().toISOString()
+    };
+    
+    // Paytm Deep Link with transaction reference
+    const paytmUrl = `paytmmp://upi/pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
     
     // Try to open Paytm app
     window.location.href = paytmUrl;
     
     // Fallback
     setTimeout(() => {
-        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+        const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
         window.location.href = fallbackUrl;
     }, 1500);
     
     playSound('addToCart');
     // showNotification('📱 Opening Paytm...', 'success'); // Removed popup
     setTimeout(() => {
-        completePayment('Paytm');
-    }, 3000);
+        showPaymentStatusDialog('Paytm', transactionId);
+    }, 8000); // Increased time for real payment
 }
 
 function payWithUPI() {
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     const upiId = '9103594759@ybl';
     
-    // Generic UPI Deep Link
-    const upiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    // Generate real-style transaction ID for UPI
+    const transactionId = 'UPI' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
+    
+    // Store transaction details
+    window.currentTransaction = {
+        method: 'UPI App',
+        transactionId: transactionId,
+        amount: totalAmount,
+        startTime: new Date().toISOString()
+    };
+    
+    // Generic UPI Deep Link with transaction reference
+    const upiUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment&tr=${transactionId}`;
     
     // Try to open any UPI app
     window.location.href = upiUrl;
@@ -1573,8 +1624,8 @@ function payWithUPI() {
     playSound('addToCart');
     // showNotification('📱 Opening UPI app...', 'success'); // Removed popup
     setTimeout(() => {
-        completePayment('UPI App');
-    }, 3000);
+        showPaymentStatusDialog('UPI App', transactionId);
+    }, 8000); // Increased time for real payment
 }
 
 // Complete Payment with Status
