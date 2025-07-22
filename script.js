@@ -1196,15 +1196,21 @@ function showPaymentOptions() {
 function getLiveLocation() {
     const locationStatus = document.getElementById('location-status');
     
-    // Enhanced geolocation detection
+    // Enhanced geolocation detection with APK/WebView support
     const hasGeolocation = 'geolocation' in navigator;
-    const isSecureContext = window.isSecureContext || location.protocol === 'https:';
+    const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.protocol === 'file:';
+    const isAndroidApp = /Android/i.test(navigator.userAgent) && (location.protocol === 'file:' || location.hostname === 'localhost' || window.Android);
+    const isWebView = window.navigator.userAgent.includes('wv') || window.Android;
     
-    console.log('🔍 Geolocation check:', {
+    console.log('🔍 Enhanced Geolocation check:', {
         hasGeolocation,
         isSecureContext,
-        navigator: !!navigator.geolocation,
-        protocol: location.protocol
+        isAndroidApp,
+        isWebView,
+        userAgent: navigator.userAgent,
+        protocol: location.protocol,
+        hostname: location.hostname,
+        androidInterface: !!window.Android
     });
     
     if (!hasGeolocation) {
@@ -1223,7 +1229,8 @@ function getLiveLocation() {
         return;
     }
     
-    if (!isSecureContext && location.hostname !== 'localhost') {
+    // Skip HTTPS check for Android APK/WebView
+    if (!isSecureContext && !isAndroidApp && location.hostname !== 'localhost') {
         locationStatus.innerHTML = `
             <div style="color: #f39c12; margin: 10px 0;">
                 <strong>⚠️ HTTPS Required for Location</strong><br>
@@ -1246,36 +1253,53 @@ function getLiveLocation() {
         navigator.permissions.query({name: 'geolocation'}).then(function(result) {
             console.log('📍 Geolocation permission:', result.state);
             if (result.state === 'denied') {
-                locationStatus.innerHTML = `
-                    <div style="color: #e74c3c; margin: 10px 0;">
-                        <strong>❌ Location Permission Denied</strong><br>
-                        <small style="color: #666;">To enable location:</small><br>
-                        <small style="color: #666;">• Click 🔒 in address bar</small><br>
-                        <small style="color: #666;">• Allow location access</small><br>
-                        <small style="color: #666;">• Refresh page & try again</small><br>
-                        <button onclick="showLocationHelp()" style="margin-top: 8px; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                            📱 Show Help
-                        </button>
-                    </div>
-                `;
+                // Different message for Android APK vs browser
+                if (isAndroidApp || isWebView) {
+                    locationStatus.innerHTML = `
+                        <div style="color: #e74c3c; margin: 10px 0;">
+                            <strong>📱 Location Permission Denied in App</strong><br>
+                            <small style="color: #666;">To enable location in Android app:</small><br>
+                            <small style="color: #666;">• Go to Android Settings</small><br>
+                            <small style="color: #666;">• Apps → ShopEasy → Permissions</small><br>
+                            <small style="color: #666;">• Turn ON Location permission</small><br>
+                            <small style="color: #666;">• Restart app & try again</small><br>
+                            <button onclick="showAndroidLocationHelp()" style="margin-top: 8px; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                📱 Android Help
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    locationStatus.innerHTML = `
+                        <div style="color: #e74c3c; margin: 10px 0;">
+                            <strong>❌ Location Permission Denied</strong><br>
+                            <small style="color: #666;">To enable location:</small><br>
+                            <small style="color: #666;">• Click 🔒 in address bar</small><br>
+                            <small style="color: #666;">• Allow location access</small><br>
+                            <small style="color: #666;">• Refresh page & try again</small><br>
+                            <button onclick="showLocationHelp()" style="margin-top: 8px; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                📱 Show Help
+                            </button>
+                        </div>
+                    `;
+                }
                 return;
             }
             
             // Proceed with location request
-            requestLocation(locationStatus);
+            requestLocation(locationStatus, isAndroidApp, isWebView);
         }).catch(function(error) {
             console.warn('Permission query failed:', error);
             // Fallback to direct request
-            requestLocation(locationStatus);
+            requestLocation(locationStatus, isAndroidApp, isWebView);
         });
     } else {
         // Fallback for browsers without permissions API
-        requestLocation(locationStatus);
+        requestLocation(locationStatus, isAndroidApp, isWebView);
     }
 }
 
 // Request location with improved error handling
-function requestLocation(locationStatus) {
+function requestLocation(locationStatus, isAndroidApp, isWebView) {
     locationStatus.textContent = '📍 Getting location...';
     
     navigator.geolocation.getCurrentPosition(
@@ -1326,17 +1350,36 @@ function requestLocation(locationStatus) {
             let errorMessage = '❌ Location error';
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    locationStatus.innerHTML = `
-                        <div style="color: #e74c3c; margin: 10px 0;">
-                            <strong>❌ Location Access Blocked</strong><br>
-                            <small style="color: #666;">Browser blocked location access</small><br>
-                            <small style="color: #666;">• Check browser settings</small><br>
-                            <small style="color: #666;">• Try manual address instead</small><br>
-                            <button onclick="useManualLocation()" style="margin-top: 8px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
-                                📝 Enter Manually
-                            </button>
-                        </div>
-                    `;
+                    // Different error handling for Android APK
+                    if (isAndroidApp || isWebView) {
+                        locationStatus.innerHTML = `
+                            <div style="color: #e74c3c; margin: 10px 0;">
+                                <strong>📱 Android Location Permission Required</strong><br>
+                                <small style="color: #666;">Location permission not granted</small><br>
+                                <small style="color: #666;">• Open Android Settings</small><br>
+                                <small style="color: #666;">• Go to Apps → Permissions</small><br>
+                                <small style="color: #666;">• Enable Location for this app</small><br>
+                                <button onclick="showAndroidLocationHelp()" style="margin: 8px 5px 0 0; padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                    📱 Android Guide
+                                </button>
+                                <button onclick="useManualLocation()" style="margin-top: 8px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                    📝 Manual Entry
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        locationStatus.innerHTML = `
+                            <div style="color: #e74c3c; margin: 10px 0;">
+                                <strong>❌ Location Access Blocked</strong><br>
+                                <small style="color: #666;">Browser blocked location access</small><br>
+                                <small style="color: #666;">• Check browser settings</small><br>
+                                <small style="color: #666;">• Try manual address instead</small><br>
+                                <button onclick="useManualLocation()" style="margin-top: 8px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                                    📝 Enter Manually
+                                </button>
+                            </div>
+                        `;
+                    }
                     return; // Don't set generic error message
                     break;
                 case error.POSITION_UNAVAILABLE:
@@ -1504,6 +1547,89 @@ function closeLocationHelp() {
     if (window.locationHelpModal) {
         document.body.removeChild(window.locationHelpModal);
         window.locationHelpModal = null;
+    }
+}
+
+// Show Android Location Help Dialog
+function showAndroidLocationHelp() {
+    const helpModal = document.createElement('div');
+    helpModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    `;
+    
+    helpModal.innerHTML = `
+        <div style="background: white; border-radius: 15px; padding: 2rem; max-width: 400px; margin: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);">
+            <h3 style="margin: 0 0 1rem 0; color: #333; text-align: center;">📱 Enable Location in Android App</h3>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: #2ecc71; margin: 0 0 0.5rem 0;">📲 Method 1: App Settings</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    1. Open Android <strong>Settings</strong><br>
+                    2. Go to <strong>Apps & notifications</strong><br>
+                    3. Find <strong>ShopEasy</strong> app<br>
+                    4. Tap <strong>Permissions</strong><br>
+                    5. Turn ON <strong>Location</strong> permission<br>
+                    6. Restart the app
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: #3498db; margin: 0 0 0.5rem 0;">⚙️ Method 2: Long Press</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    1. Long press the <strong>ShopEasy app icon</strong><br>
+                    2. Tap <strong>App info</strong> (ⓘ icon)<br>
+                    3. Go to <strong>Permissions</strong><br>
+                    4. Enable <strong>Location</strong><br>
+                    5. Return to app & try again
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="color: #e74c3c; margin: 0 0 0.5rem 0;">⚠️ Important Notes:</h4>
+                <p style="margin: 0; color: #666; font-size: 14px;">
+                    • Allow location "All the time" or "While using app"<br>
+                    • Don't select "Don't allow"<br>
+                    • Restart app after changing permission<br>
+                    • If still issues, use manual address
+                </p>
+            </div>
+            
+            <div style="text-align: center;">
+                <button onclick="closeAndroidLocationHelp()" style="background: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+                    ✅ Got It!
+                </button>
+                <button onclick="closeAndroidLocationHelp(); useManualLocation();" style="background: #95a5a6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    📝 Use Manual Entry
+                </button>
+            </div>
+        </div>
+    `;
+    
+    helpModal.onclick = function(e) {
+        if (e.target === helpModal) {
+            closeAndroidLocationHelp();
+        }
+    };
+    
+    document.body.appendChild(helpModal);
+    window.androidLocationHelpModal = helpModal;
+}
+
+// Close Android Location Help
+function closeAndroidLocationHelp() {
+    if (window.androidLocationHelpModal) {
+        document.body.removeChild(window.androidLocationHelpModal);
+        window.androidLocationHelpModal = null;
     }
 }
 
