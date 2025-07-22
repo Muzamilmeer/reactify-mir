@@ -946,6 +946,8 @@ function closeOrderModal() {
 
 // Show Payment Options
 function showPaymentOptions() {
+    console.log('🔍 showPaymentOptions called, cart length:', cart.length);
+    
     if (cart.length === 0) {
         showNotification('❌ Your cart is empty! Add some products first.', 'error');
         return;
@@ -954,9 +956,19 @@ function showPaymentOptions() {
     const paymentOptions = document.getElementById('payment-options');
     const checkoutBtn = document.getElementById('checkout-btn');
     
-    // Show payment options, hide proceed button
-    paymentOptions.style.display = 'block';
-    checkoutBtn.style.display = 'none';
+    console.log('🔍 Payment Options Element:', paymentOptions);
+    console.log('🔍 Checkout Button Element:', checkoutBtn);
+    
+    if (paymentOptions && checkoutBtn) {
+        // Show payment options, hide proceed button
+        paymentOptions.style.display = 'block';
+        checkoutBtn.style.display = 'none';
+        console.log('✅ Payment options shown successfully!');
+    } else {
+        console.error('❌ Payment options or checkout button not found!');
+        showNotification('❌ Payment system error! Please try again.', 'error');
+        return;
+    }
     
     playSound('themeChange');
     showNotification('💳 Choose your payment method', 'info');
@@ -964,19 +976,34 @@ function showPaymentOptions() {
 
 // Payment Functions - Direct App Opening (Like YouTube/Facebook)
 function payWithPhonePe() {
+    console.log('🎯 PayWithPhonePe called!');
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     const upiId = '9103594759@ybl';
     
+    console.log('💰 Total Amount:', totalAmount);
+    console.log('🆔 UPI ID:', upiId);
+    
     // PhonePe Deep Link
     const phonePeUrl = `phonepe://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
+    console.log('🔗 PhonePe URL:', phonePeUrl);
     
     // Try to open PhonePe app
-    window.location.href = phonePeUrl;
+    try {
+        window.location.href = phonePeUrl;
+        console.log('✅ PhonePe app opening attempted');
+    } catch (error) {
+        console.error('❌ Error opening PhonePe:', error);
+    }
     
     // Fallback for web/desktop
     setTimeout(() => {
         const fallbackUrl = `upi://pay?pa=${upiId}&am=${totalAmount}&cu=INR&tn=ShopEasy Payment`;
-        window.location.href = fallbackUrl;
+        console.log('🔄 Fallback URL:', fallbackUrl);
+        try {
+            window.location.href = fallbackUrl;
+        } catch (error) {
+            console.error('❌ Fallback error:', error);
+        }
     }, 1500);
     
     playSound('addToCart');
@@ -1055,7 +1082,7 @@ function completePayment(paymentMethod) {
     
     // Clear cart and close
     cart = [];
-    updateCartDisplay();
+    updateCartUI();
     closeCart();
     
     // Reset payment options
