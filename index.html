@@ -26,7 +26,12 @@
                     <span></span>
                 </div>
             </div>
-            <button class="open-app-btn" id="open-app-btn">
+            <button class="open-app-btn" id="open-app-btn" onclick="
+                document.getElementById('splash-screen').style.display='none';
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('main-app').style.opacity='1';
+                document.getElementById('main-app').style.display='block';
+            ">
                 <i class="fas fa-play"></i>
                 Open App
             </button>
