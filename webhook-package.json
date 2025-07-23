@@ -1,0 +1,25 @@
+{
+  "name": "razorpay-webhook-server",
+  "version": "1.0.0",
+  "description": "Webhook server for Razorpay payment verification",
+  "main": "webhook-server.js",
+  "scripts": {
+    "start": "node webhook-server.js",
+    "dev": "nodemon webhook-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "webhook",
+    "razorpay",
+    "payment",
+    "verification"
+  ],
+  "author": "Muzamil Ahmad",
+  "license": "MIT"
+}
