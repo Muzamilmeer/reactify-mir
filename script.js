@@ -4551,3 +4551,90 @@ function closeManualModal() {
         window.manualPaymentModal = null;
     }
 }
+
+// Custom Alert Function - No Domain Name in Title
+function showCustomAlert(message) {
+    // Remove any existing custom alert
+    const existingAlert = document.getElementById('custom-alert-modal');
+    if (existingAlert) {
+        document.body.removeChild(existingAlert);
+    }
+    
+    // Create custom alert modal
+    const modal = document.createElement('div');
+    modal.id = 'custom-alert-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        font-family: 'Poppins', sans-serif;
+    `;
+    
+    // Create alert box
+    const alertBox = document.createElement('div');
+    alertBox.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        text-align: center;
+        animation: alertSlideIn 0.3s ease-out;
+    `;
+    
+    // Add animation keyframes
+    if (!document.getElementById('custom-alert-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'custom-alert-styles';
+        styles.innerHTML = `
+            @keyframes alertSlideIn {
+                from { transform: scale(0.7); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+    
+    // Format message (replace \\n with actual line breaks)
+    const formattedMessage = message.replace(/\\n/g, '<br>');
+    
+    // Alert content
+    alertBox.innerHTML = `
+        <div style="color: #333; font-size: 18px; line-height: 1.6; margin-bottom: 25px;">
+            ${formattedMessage}
+        </div>
+        <button onclick="document.body.removeChild(document.getElementById('custom-alert-modal'))" 
+                style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 30px;
+                    border-radius: 25px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                "
+                onmouseover="this.style.transform='scale(1.05)'"
+                onmouseout="this.style.transform='scale(1)'">
+            OK
+        </button>
+    `;
+    
+    modal.appendChild(alertBox);
+    document.body.appendChild(modal);
+    
+    // Close on outside click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
