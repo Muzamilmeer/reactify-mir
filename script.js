@@ -2028,25 +2028,97 @@ function proceedWithPayment() {
     // showNotification('💳 Now choose your payment method', 'success'); // Removed popup
 }
 
-// Simple Razorpay payment function
+// Payment function with multiple options
 function payWithRazorpay() {
-    console.log('🎯 Redirecting to Razorpay...');
+    console.log('🎯 Processing payment...');
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     
     console.log('💰 Total Amount:', totalAmount);
     
-    // Direct redirect to Razorpay - clean and simple
+    // Show payment options modal
+    showPaymentOptionsModal(totalAmount);
+}
+
+function showPaymentOptionsModal(amount) {
+    const modalHTML = `
+        <div id="payment-options-modal" style="
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.8); z-index: 20000; display: flex; 
+            justify-content: center; align-items: center;">
+            <div style="
+                background: white; border-radius: 15px; padding: 2rem; 
+                max-width: 400px; width: 90%; text-align: center; 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                
+                <h3 style="margin: 0 0 1rem 0; color: #333;">💳 Choose Payment Method</h3>
+                <p style="color: #666; margin: 1rem 0;">Amount: ₹${amount}</p>
+                
+                <div style="margin: 1.5rem 0;">
+                    <button onclick="payViaWhatsApp(${amount})" style="
+                        width: 100%; background: #25d366; color: white; border: none; 
+                        padding: 15px; border-radius: 8px; cursor: pointer; margin: 5px 0;
+                        font-size: 16px; font-weight: bold;">
+                        💬 Pay via WhatsApp
+                    </button>
+                    
+                    <button onclick="payViaRazorpay()" style="
+                        width: 100%; background: #1a237e; color: white; border: none; 
+                        padding: 15px; border-radius: 8px; cursor: pointer; margin: 5px 0;
+                        font-size: 16px; font-weight: bold;">
+                        💳 Razorpay (Need Setup)
+                    </button>
+                </div>
+                
+                <button onclick="closePaymentOptionsModal()" style="
+                    background: #6c757d; color: white; border: none; 
+                    padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('payment-options-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add new modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function payViaWhatsApp(amount) {
     try {
-        window.open('https://razorpay.me/@muzamilahmadmirgojjer', '_blank');
+        const message = `🛒 *New Order Payment Request*\n\n💰 Amount: ₹${amount}\n📱 Items: ${cart.length} items\n\nPlease confirm payment details.`;
+        window.open('https://wa.me/919103594759?text=' + encodeURIComponent(message), '_blank');
         
-        // Simple success message
+        closePaymentOptionsModal();
+        
         setTimeout(() => {
-            alert('💳 Redirected to Razorpay! Complete your payment there.');
+            alert('💬 WhatsApp opened! Send your payment request to complete the order.');
         }, 1000);
         
     } catch (error) {
-        console.error('Error redirecting to Razorpay:', error);
-        alert('Unable to open payment page. Please try again.');
+        console.error('Error opening WhatsApp:', error);
+        alert('Unable to open WhatsApp. Please try again.');
+    }
+}
+
+function payViaRazorpay() {
+    closePaymentOptionsModal();
+    
+    alert(`🔧 Razorpay Setup Required!\n\nTo use Razorpay payments:\n1. Create a Razorpay account\n2. Generate Payment Link\n3. Update the URL in code\n\nCurrently using WhatsApp for payments.`);
+    
+    // Fallback to WhatsApp
+    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    payViaWhatsApp(totalAmount);
+}
+
+function closePaymentOptionsModal() {
+    const modal = document.getElementById('payment-options-modal');
+    if (modal) {
+        modal.remove();
     }
 }
 
@@ -2346,6 +2418,9 @@ window.useManualLocation = useManualLocation;
 window.setManualLocation = setManualLocation;
 window.proceedWithPayment = proceedWithPayment;
 window.payWithRazorpay = payWithRazorpay;
+window.payViaWhatsApp = payViaWhatsApp;
+window.payViaRazorpay = payViaRazorpay;
+window.closePaymentOptionsModal = closePaymentOptionsModal;
 window.closeReceiptModal = closeReceiptModal;
 window.downloadReceipt = downloadReceipt;
 window.shareReceipt = shareReceipt;
