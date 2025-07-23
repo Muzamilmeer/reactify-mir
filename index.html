@@ -164,25 +164,9 @@
                 </div>
 
                 <!-- Payment Options -->
-                <div class="payment-options" id="payment-options" style="display: none;">
-                    <h4>💳 Choose Payment Method</h4>
-                    <div class="payment-buttons">
-                        <button class="payment-btn phonepe" onclick="payWithPhonePe()">
-                            <i class="fab fa-google-pay"></i> PhonePe
-                        </button>
-                        <button class="payment-btn gpay" onclick="payWithGPay()">
-                            <i class="fab fa-google-pay"></i> GPay
-                        </button>
-                        <button class="payment-btn paytm" onclick="payWithPaytm()">
-                            <i class="fas fa-mobile-alt"></i> Paytm
-                        </button>
-                        <button class="payment-btn upi" onclick="payWithUPI()">
-                            <i class="fas fa-university"></i> Any UPI
-                        </button>
-                    </div>
-                </div>
-                
-                <button class="checkout-btn" onclick="showPaymentOptions()" id="checkout-btn">💳 Proceed to Payment</button>
+                <button class="checkout-btn razorpay-btn" onclick="payWithRazorpay()" id="checkout-btn">
+                    <i class="fas fa-credit-card"></i> Pay with Razorpay 💳
+                </button>
                 <button class="track-order-btn" onclick="trackOrder()">
                     <i class="fas fa-map-marker-alt"></i> Track Your Order
                 </button>

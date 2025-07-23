@@ -1449,6 +1449,17 @@ body {
     transform: translateY(-2px);
 }
 
+.razorpay-btn {
+    background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+    box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+}
+
+.razorpay-btn:hover {
+    background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26, 35, 126, 0.4);
+}
+
 /* Payment Options Styles */
 .payment-options {
     margin: 1rem 0;
