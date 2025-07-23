@@ -2030,20 +2030,23 @@ function proceedWithPayment() {
 
 // Simple Razorpay payment function
 function payWithRazorpay() {
-    console.log('🎯 Redirecting to Razorpay...');
-    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    console.log('🎯 Checking cart and processing payment...');
     
+    // Check if cart is empty first
+    if (cart.length === 0) {
+        alert('🛒 Your cart is empty!\n\nPlease add some products to cart before making payment.');
+        return;
+    }
+    
+    const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     console.log('💰 Total Amount:', totalAmount);
     
-    // Direct redirect to Razorpay - clean and simple
+    // Direct redirect to Razorpay - clean and simple, no popup
     try {
         // Using generic Razorpay.me link - replace with your actual payment link
         window.open('https://razorpay.me/@muzamilahmadmirgojjer', '_blank');
         
-        // Simple success message
-        setTimeout(() => {
-            alert('💳 Redirected to Razorpay! Complete your payment there.');
-        }, 1000);
+        // Removed success popup as requested
         
     } catch (error) {
         console.error('Error redirecting to Razorpay:', error);
