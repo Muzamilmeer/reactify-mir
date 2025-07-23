@@ -2028,36 +2028,21 @@ function proceedWithPayment() {
     // showNotification('💳 Now choose your payment method', 'success'); // Removed popup
 }
 
-// Simple Razorpay payment function with webhook verification
+// Simple Razorpay payment function
 function payWithRazorpay() {
-    console.log('🎯 Starting Razorpay payment...');
+    console.log('🎯 Redirecting to Razorpay...');
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     
     console.log('💰 Total Amount:', totalAmount);
     
-    // Generate unique order ID for tracking
-    const orderId = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6).toUpperCase();
-    
-    // Store order details for webhook verification
-    localStorage.setItem('pendingOrder', JSON.stringify({
-        orderId: orderId,
-        amount: totalAmount,
-        items: cart,
-        timestamp: new Date().toISOString(),
-        status: 'pending'
-    }));
-    
-    // Direct redirect to Razorpay - no fake verification
+    // Direct redirect to Razorpay - clean and simple
     try {
-        // Add order ID to Razorpay URL for tracking
-        const razorpayUrl = `https://razorpay.me/@muzamilahmadmirgojjer?amount=${totalAmount}&order_id=${orderId}`;
-        window.open(razorpayUrl, '_blank');
+        window.open('https://razorpay.me/@muzamilahmadmirgojjer', '_blank');
         
-        // Show payment processing status
-        showPaymentProcessingModal(orderId, totalAmount);
-        
-        // Start checking payment status via webhook
-        startPaymentStatusCheck(orderId);
+        // Simple success message
+        setTimeout(() => {
+            alert('💳 Redirected to Razorpay! Complete your payment there.');
+        }, 1000);
         
     } catch (error) {
         console.error('Error redirecting to Razorpay:', error);
@@ -2065,199 +2050,7 @@ function payWithRazorpay() {
     }
 }
 
-// Show payment processing modal
-function showPaymentProcessingModal(orderId, amount) {
-    const modalHTML = `
-        <div id="payment-processing-modal" style="
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.8); z-index: 20000; display: flex; 
-            justify-content: center; align-items: center;">
-            <div style="
-                background: white; border-radius: 15px; padding: 2rem; 
-                max-width: 400px; width: 90%; text-align: center; 
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                
-                <h3 style="margin: 0 0 1rem 0; color: #333;">💳 Payment Processing</h3>
-                
-                <div id="payment-status" style="margin: 1.5rem 0;">
-                    <div style="margin: 1rem 0;">
-                        <div class="loading-spinner" style="
-                            border: 4px solid #f3f3f3; border-top: 4px solid #1a237e; 
-                            border-radius: 50%; width: 40px; height: 40px; 
-                            animation: spin 1s linear infinite; margin: 0 auto 1rem;">
-                        </div>
-                        <p style="color: #666; margin: 0;">Waiting for payment confirmation...</p>
-                        <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0;">
-                            Order ID: ${orderId}
-                        </p>
-                        <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0;">
-                            Amount: ₹${amount}
-                        </p>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 1.5rem;">
-                    <button onclick="closePaymentModal()" style="
-                        background: #6c757d; color: white; border: none; 
-                        padding: 10px 20px; border-radius: 8px; cursor: pointer;">
-                        Continue Shopping
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if any
-    const existingModal = document.getElementById('payment-processing-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Add new modal to body
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
 
-// Start checking payment status via webhook
-function startPaymentStatusCheck(orderId) {
-    let checkCount = 0;
-    const maxChecks = 60; // Check for 5 minutes (every 5 seconds)
-    
-    const checkInterval = setInterval(async () => {
-        checkCount++;
-        
-        try {
-            // Check payment status via webhook URL
-            const webhookResponse = await checkPaymentViaWebhook(orderId);
-            
-            if (webhookResponse.status === 'success') {
-                clearInterval(checkInterval);
-                showPaymentSuccess(webhookResponse.data);
-            } else if (webhookResponse.status === 'failed') {
-                clearInterval(checkInterval);
-                showPaymentFailed(orderId);
-            }
-            
-        } catch (error) {
-            console.log('Checking payment status...', checkCount);
-        }
-        
-        // Stop checking after max attempts
-        if (checkCount >= maxChecks) {
-            clearInterval(checkInterval);
-            showPaymentTimeout(orderId);
-        }
-        
-    }, 5000); // Check every 5 seconds
-}
-
-// Check payment status via webhook URL
-async function checkPaymentViaWebhook(orderId) {
-    try {
-        // You'll provide the webhook URL here
-        const webhookUrl = 'YOUR_WEBHOOK_URL_HERE'; // Replace with your webhook URL
-        
-        const response = await fetch(`${webhookUrl}/check-payment`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                orderId: orderId,
-                timestamp: new Date().toISOString()
-            })
-        });
-        
-        const result = await response.json();
-        return result;
-        
-    } catch (error) {
-        console.error('Webhook check failed:', error);
-        return { status: 'pending' };
-    }
-}
-
-// Show payment success
-function showPaymentSuccess(paymentData) {
-    const modal = document.getElementById('payment-processing-modal');
-    if (modal) {
-        const statusDiv = modal.querySelector('#payment-status');
-        statusDiv.innerHTML = `
-            <div style="margin: 1rem 0;">
-                <div style="color: #27ae60; font-size: 3rem; margin: 1rem 0;">✅</div>
-                <h4 style="color: #27ae60; margin: 0.5rem 0;">Payment Successful!</h4>
-                <p style="color: #666; margin: 0;">Transaction completed successfully</p>
-                <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0;">
-                    UPI ID: ${paymentData.upiId || 'N/A'}
-                </p>
-                <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0;">
-                    Transaction ID: ${paymentData.transactionId || 'N/A'}
-                </p>
-            </div>
-        `;
-        
-        // Clear cart after successful payment
-        setTimeout(() => {
-            cart = [];
-            updateCartDisplay();
-            closePaymentModal();
-            alert('🎉 Payment successful! Your order has been confirmed.');
-        }, 3000);
-    }
-}
-
-// Show payment failed
-function showPaymentFailed(orderId) {
-    const modal = document.getElementById('payment-processing-modal');
-    if (modal) {
-        const statusDiv = modal.querySelector('#payment-status');
-        statusDiv.innerHTML = `
-            <div style="margin: 1rem 0;">
-                <div style="color: #e74c3c; font-size: 3rem; margin: 1rem 0;">❌</div>
-                <h4 style="color: #e74c3c; margin: 0.5rem 0;">Payment Failed</h4>
-                <p style="color: #666; margin: 0;">Transaction was not completed</p>
-                <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0;">
-                    Order ID: ${orderId}
-                </p>
-                <button onclick="payWithRazorpay()" style="
-                    background: #1a237e; color: white; border: none; 
-                    padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 1rem;">
-                    Try Again
-                </button>
-            </div>
-        `;
-    }
-}
-
-// Show payment timeout
-function showPaymentTimeout(orderId) {
-    const modal = document.getElementById('payment-processing-modal');
-    if (modal) {
-        const statusDiv = modal.querySelector('#payment-status');
-        statusDiv.innerHTML = `
-            <div style="margin: 1rem 0;">
-                <div style="color: #f39c12; font-size: 3rem; margin: 1rem 0;">⏰</div>
-                <h4 style="color: #f39c12; margin: 0.5rem 0;">Payment Verification Timeout</h4>
-                <p style="color: #666; margin: 0;">Unable to verify payment status</p>
-                <p style="color: #999; font-size: 0.9rem; margin: 0.5rem 0;">
-                    If you completed the payment, it will be processed shortly.
-                </p>
-                <button onclick="startPaymentStatusCheck('${orderId}')" style="
-                    background: #1a237e; color: white; border: none; 
-                    padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 1rem;">
-                    Check Again
-                </button>
-            </div>
-        `;
-    }
-}
-
-// Close payment modal
-function closePaymentModal() {
-    const modal = document.getElementById('payment-processing-modal');
-    if (modal) {
-        modal.remove();
-    }
-}
 
 // Payment Verification Modal with Smart Detection
 // Complete Payment with Status
@@ -2553,7 +2346,6 @@ window.useManualLocation = useManualLocation;
 window.setManualLocation = setManualLocation;
 window.proceedWithPayment = proceedWithPayment;
 window.payWithRazorpay = payWithRazorpay;
-window.closePaymentModal = closePaymentModal;
 window.closeReceiptModal = closeReceiptModal;
 window.downloadReceipt = downloadReceipt;
 window.shareReceipt = shareReceipt;
