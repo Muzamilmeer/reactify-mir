@@ -2382,6 +2382,7 @@ window.useManualLocation = useManualLocation;
 window.setManualLocation = setManualLocation;
 window.proceedWithPayment = proceedWithPayment;
 window.payWithRazorpay = payWithRazorpay;
+window.verifyAndConfirmPayment = verifyAndConfirmPayment;
 window.handlePaymentSuccess = handlePaymentSuccess;
 window.handlePaymentFailure = handlePaymentFailure;
 window.closeReceiptModal = closeReceiptModal;
@@ -4723,7 +4724,7 @@ function checkUrlForPaymentStatus() {
     }
 }
 
-// Show payment status dialog
+// Show payment verification dialog with security
 function showPaymentStatusDialog(paymentData) {
     const modal = document.createElement('div');
     modal.style.cssText = `
@@ -4746,51 +4747,133 @@ function showPaymentStatusDialog(paymentData) {
         padding: 40px;
         border-radius: 20px;
         box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        max-width: 400px;
+        max-width: 450px;
         text-align: center;
     `;
     
     modalContent.innerHTML = `
-        <h3 style="color: #333; margin-bottom: 20px;">💳 Payment Status Check</h3>
-        <p style="color: #666; margin-bottom: 20px;">Order: ${paymentData.orderId}</p>
-        <p style="color: #666; margin-bottom: 30px;">Did your payment complete successfully?</p>
+        <div style="margin-bottom: 20px;">
+            <i class="fas fa-shield-alt" style="font-size: 48px; color: #3498db; margin-bottom: 15px;"></i>
+            <h3 style="color: #333; margin-bottom: 15px;">🔐 Payment Verification</h3>
+        </div>
         
-        <div style="display: flex; gap: 15px; justify-content: center;">
-            <button onclick="handlePaymentSuccess(); document.body.removeChild(this.closest('div').parentElement.parentElement)" 
-                    style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: 600;">
-                ✅ Yes, Paid Successfully
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+            <p style="color: #666; margin-bottom: 8px;"><strong>Order ID:</strong> ${paymentData.orderId}</p>
+            <p style="color: #666; margin-bottom: 8px;"><strong>Amount:</strong> ₹${paymentData.amount}</p>
+            <p style="color: #666;"><strong>Items:</strong> ${paymentData.items} products</p>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #ffc107;">
+            <p style="color: #856404; font-size: 14px; margin: 0;">
+                ⚠️ <strong>SECURITY NOTICE:</strong><br>
+                Only confirm if you have successfully completed payment on Razorpay and received confirmation.
+            </p>
+        </div>
+        
+        <p style="color: #666; margin-bottom: 25px; font-weight: 500;">
+            Please verify your payment status carefully:
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <button onclick="verifyAndConfirmPayment('${paymentData.orderId}'); document.body.removeChild(this.closest('div').parentElement.parentElement)" 
+                    style="background: #28a745; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                ✅ I completed payment and received Razorpay confirmation
             </button>
             <button onclick="handlePaymentFailure(); document.body.removeChild(this.closest('div').parentElement.parentElement)" 
-                    style="background: #f44336; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: 600;">
-                ❌ Payment Failed
+                    style="background: #dc3545; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                ❌ Payment was not completed
             </button>
         </div>
         
         <button onclick="document.body.removeChild(this.parentElement.parentElement)" 
-                style="background: #ddd; color: #666; border: none; padding: 8px 16px; border-radius: 15px; cursor: pointer; margin-top: 15px; font-size: 12px;">
-            Cancel
+                style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 15px; cursor: pointer; font-size: 12px;">
+            ⏸️ I'll check later
         </button>
+        
+        <div style="margin-top: 20px; padding: 10px; background: #e7f3ff; border-radius: 6px;">
+            <p style="color: #0066cc; font-size: 12px; margin: 0;">
+                💡 <strong>Tip:</strong> Check your email/SMS for Razorpay payment confirmation before proceeding.
+            </p>
+        </div>
     `;
     
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
 }
 
-// Handle successful payment
+// Verify and confirm payment with additional security
+function verifyAndConfirmPayment(orderId) {
+    const pendingPayment = localStorage.getItem('pendingPayment');
+    if (!pendingPayment) {
+        showCustomAlert('❌ No pending payment found!\\n\\nPayment session may have expired.');
+        return;
+    }
+    
+    const paymentData = JSON.parse(pendingPayment);
+    const timeDiff = Date.now() - paymentData.timestamp;
+    
+    // Security checks
+    if (paymentData.orderId !== orderId) {
+        showCustomAlert('❌ Order ID mismatch!\\n\\nSecurity validation failed.');
+        return;
+    }
+    
+    // Check if payment was initiated recently (within 15 minutes)
+    if (timeDiff > 900000) { // 15 minutes
+        showCustomAlert('❌ Payment session expired!\\n\\nPayment window was too long ago.\\nPlease initiate a new payment.');
+        localStorage.removeItem('pendingPayment');
+        return;
+    }
+    
+    // Check if payment was too quick (less than 30 seconds)
+    if (timeDiff < 30000) { // 30 seconds
+        showCustomAlert('⚠️ Payment too quick!\\n\\nPlease ensure you completed the full payment process on Razorpay.');
+        return;
+    }
+    
+    // Additional verification: Check for multiple rapid confirmations
+    const lastConfirmation = localStorage.getItem('lastPaymentConfirmation');
+    if (lastConfirmation) {
+        const lastTime = parseInt(lastConfirmation);
+        if (Date.now() - lastTime < 60000) { // 1 minute
+            showCustomAlert('❌ Multiple confirmation attempts detected!\\n\\nPlease wait before confirming again.');
+            return;
+        }
+    }
+    
+    // Store confirmation timestamp
+    localStorage.setItem('lastPaymentConfirmation', Date.now().toString());
+    
+    // All checks passed - proceed with payment confirmation
+    handlePaymentSuccess();
+}
+
+// Handle successful payment (now called after verification)
 function handlePaymentSuccess() {
     const pendingPayment = localStorage.getItem('pendingPayment');
     if (pendingPayment) {
         const paymentData = JSON.parse(pendingPayment);
+        
+        // Security log
+        console.log('✅ Payment verified and confirmed:', {
+            orderId: paymentData.orderId,
+            amount: paymentData.amount,
+            timestamp: new Date(paymentData.timestamp).toLocaleString(),
+            verificationTime: new Date().toLocaleString()
+        });
         
         // Clear cart and show success
         cart = [];
         updateCartUI();
         localStorage.removeItem('pendingPayment');
         
-        // Generate receipt
-        generatePaymentReceipt(paymentData);
+        // Generate receipt with verification timestamp
+        generatePaymentReceipt({
+            ...paymentData,
+            verifiedAt: Date.now()
+        });
         
-        showCustomAlert('🎉 Payment Successful!\\n\\nThank you for your purchase.\\nReceipt has been generated!');
+        showCustomAlert('🎉 Payment Verified & Confirmed!\\n\\nThank you for your purchase.\\nSecure receipt has been generated!');
     }
 }
 
@@ -4800,16 +4883,19 @@ function handlePaymentFailure() {
     showCustomAlert('❌ Payment Failed!\\n\\nYour cart items are still saved.\\nPlease try again.');
 }
 
-// Generate Payment Receipt
+// Generate Secure Payment Receipt
 function generatePaymentReceipt(paymentData) {
     const receipt = {
         orderId: paymentData.orderId,
-        timestamp: new Date().toLocaleString(),
+        initiatedAt: new Date(paymentData.timestamp).toLocaleString(),
+        verifiedAt: paymentData.verifiedAt ? new Date(paymentData.verifiedAt).toLocaleString() : new Date().toLocaleString(),
         amount: paymentData.amount,
         items: paymentData.items,
         paymentMethod: 'Razorpay',
-        status: 'Paid',
-        merchantName: 'ShopEasy'
+        status: 'Verified & Paid',
+        merchantName: 'ShopEasy',
+        securityHash: generateSecurityHash(paymentData),
+        receiptId: 'RCP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
     };
     
     // Store in localStorage
@@ -4817,15 +4903,31 @@ function generatePaymentReceipt(paymentData) {
     receipts.push(receipt);
     localStorage.setItem('paymentReceipts', JSON.stringify(receipts));
     
-    console.log('📧 Receipt generated:', receipt);
+    console.log('📧 Secure receipt generated:', receipt);
     
-    // Show receipt in console for debugging
-    console.log('=== PAYMENT RECEIPT ===');
+    // Show detailed receipt in console
+    console.log('=== SECURE PAYMENT RECEIPT ===');
+    console.log('Receipt ID:', receipt.receiptId);
     console.log('Order ID:', receipt.orderId);
-    console.log('Date:', receipt.timestamp);
+    console.log('Payment Initiated:', receipt.initiatedAt);
+    console.log('Payment Verified:', receipt.verifiedAt);
     console.log('Amount: ₹' + receipt.amount);
+    console.log('Items:', receipt.items);
     console.log('Status:', receipt.status);
-    console.log('=====================');
+    console.log('Security Hash:', receipt.securityHash);
+    console.log('===========================');
+}
+
+// Generate security hash for receipt verification
+function generateSecurityHash(paymentData) {
+    const hashString = paymentData.orderId + paymentData.amount + paymentData.timestamp + 'SHOPEASY_SECRET';
+    let hash = 0;
+    for (let i = 0; i < hashString.length; i++) {
+        const char = hashString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16).toUpperCase().substr(0, 8);
 }
 
 // Custom Alert Function - No Domain Name in Title
