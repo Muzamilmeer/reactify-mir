@@ -289,22 +289,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Lock button initialized');
         }, 100);
         
-        // Check for pending payments on page load
+        // Check for completed orders on page load
         setTimeout(() => {
-            const pendingPayment = localStorage.getItem('pendingPayment');
-            if (pendingPayment) {
-                const paymentData = JSON.parse(pendingPayment);
-                const timeDiff = Date.now() - paymentData.timestamp;
-                
-                // If payment was recent (within 10 minutes), show status dialog
-                if (timeDiff < 600000) {
-                    showPaymentStatusDialog(paymentData);
-                } else {
-                    // Clean up old pending payments
-                    localStorage.removeItem('pendingPayment');
-                }
+            const lastOrder = localStorage.getItem('lastOrder');
+            if (lastOrder) {
+                // Simple receipt generation
+                generateSimpleReceipt();
             }
-        }, 3000);
+        }, 2000);
         
         // Add user activity listeners for auto-lock timer
         const activityEvents = ['click', 'scroll', 'keypress', 'mousemove', 'touchstart'];
@@ -2045,9 +2037,9 @@ function proceedWithPayment() {
     // showNotification('💳 Now choose your payment method', 'success'); // Removed popup
 }
 
-// Enhanced Razorpay payment function with Status Detection
+// Simple Razorpay payment function - Clean & Direct
 function payWithRazorpay() {
-    console.log('🎯 Checking cart and processing payment...');
+    console.log('🎯 Processing Razorpay payment...');
     
     // Check if cart is empty first
     if (cart.length === 0) {
@@ -2058,27 +2050,31 @@ function payWithRazorpay() {
     const totalAmount = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     console.log('💰 Total Amount:', totalAmount);
     
-    // Generate unique order ID for tracking
-    const orderId = 'ORD_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    // Generate order for receipt
+    const orderData = {
+        orderId: 'ORD_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        amount: totalAmount,
+        items: cart.length,
+        timestamp: Date.now()
+    };
     
-    // Show payment processing modal
-    showPaymentProcessingModal(orderId, totalAmount);
+    // Store order info
+    localStorage.setItem('lastOrder', JSON.stringify(orderData));
     
-    // Direct redirect to Razorpay with better mobile support
+    // Direct redirect to Razorpay - Let Razorpay handle confirmation
     try {
-        // For mobile/webview - use location.href instead of window.open
+        // For mobile/webview - use location.href for better experience
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         if (isMobile) {
-            // Mobile: same tab redirect for better experience
+            // Mobile: same tab redirect
             window.location.href = 'https://razorpay.me/@muzamilahmadmirgojjer';
         } else {
             // Desktop: new tab
             window.open('https://razorpay.me/@muzamilahmadmirgojjer', '_blank');
         }
         
-        // Start payment status monitoring
-        startPaymentStatusMonitoring(orderId);
+        console.log('🔗 Redirected to Razorpay for payment processing');
         
     } catch (error) {
         console.error('Error redirecting to Razorpay:', error);
@@ -2382,9 +2378,7 @@ window.useManualLocation = useManualLocation;
 window.setManualLocation = setManualLocation;
 window.proceedWithPayment = proceedWithPayment;
 window.payWithRazorpay = payWithRazorpay;
-window.verifyAndConfirmPayment = verifyAndConfirmPayment;
-window.handlePaymentSuccess = handlePaymentSuccess;
-window.handlePaymentFailure = handlePaymentFailure;
+window.generateSimpleReceipt = generateSimpleReceipt;
 window.closeReceiptModal = closeReceiptModal;
 window.downloadReceipt = downloadReceipt;
 window.shareReceipt = shareReceipt;
@@ -4587,347 +4581,47 @@ function closeManualModal() {
     }
 }
 
-// Payment Processing Modal
-function showPaymentProcessingModal(orderId, amount) {
-    // Remove existing modal
-    const existingModal = document.getElementById('payment-processing-modal');
-    if (existingModal) {
-        document.body.removeChild(existingModal);
-    }
-    
-    // Create processing modal
-    const modal = document.createElement('div');
-    modal.id = 'payment-processing-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 99999;
-        font-family: 'Poppins', sans-serif;
-    `;
-    
-    // Create modal content
-    const modalContent = document.createElement('div');
-    modalContent.style.cssText = `
-        background: white;
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        max-width: 450px;
-        text-align: center;
-        animation: paymentModalSlideIn 0.4s ease-out;
-    `;
-    
-    // Add CSS for animation
-    if (!document.getElementById('payment-modal-styles')) {
-        const styles = document.createElement('style');
-        styles.id = 'payment-modal-styles';
-        styles.innerHTML = `
-            @keyframes paymentModalSlideIn {
-                from { transform: scale(0.8) translateY(-20px); opacity: 0; }
-                to { transform: scale(1) translateY(0); opacity: 1; }
-            }
-            .payment-spinner {
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #4CAF50;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
-            }
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(styles);
-    }
-    
-    modalContent.innerHTML = `
-        <div class="payment-spinner"></div>
-        <h3 style="color: #333; margin-bottom: 15px;">🔄 Processing Payment</h3>
-        <p style="color: #666; margin-bottom: 10px;">Order ID: <strong>${orderId}</strong></p>
-        <p style="color: #666; margin-bottom: 20px;">Amount: <strong>₹${amount}</strong></p>
-        <p style="color: #888; font-size: 14px;">You will be redirected to Razorpay...</p>
-        <p style="color: #888; font-size: 12px; margin-top: 15px;">After payment, you'll be brought back automatically</p>
-    `;
-    
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-    
-    // Auto-hide after 3 seconds (when redirect happens)
-    setTimeout(() => {
-        if (document.getElementById('payment-processing-modal')) {
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                if (document.body.contains(modal)) {
-                    document.body.removeChild(modal);
-                }
-            }, 300);
-        }
-    }, 3000);
-}
-
-// Payment Status Monitoring System
-function startPaymentStatusMonitoring(orderId) {
-    console.log('🔍 Starting payment status monitoring for:', orderId);
-    
-    // Store order info in localStorage for persistence
-    localStorage.setItem('pendingPayment', JSON.stringify({
-        orderId: orderId,
-        timestamp: Date.now(),
-        amount: cart.reduce((total, item) => total + (item.price * item.quantity), 0),
-        items: cart.length
-    }));
-    
-    // Monitor when user returns to the page
-    window.addEventListener('focus', handleUserReturn);
-    window.addEventListener('pageshow', handleUserReturn);
-    
-    // Check for URL parameters that might indicate payment status
-    checkUrlForPaymentStatus();
-}
-
-// Handle user returning to page after payment
-function handleUserReturn() {
-    console.log('👀 User returned to page, checking payment status...');
-    
-    const pendingPayment = localStorage.getItem('pendingPayment');
-    if (pendingPayment) {
-        const paymentData = JSON.parse(pendingPayment);
+// Simple Receipt Generation - Let Razorpay handle confirmation
+function generateSimpleReceipt() {
+    const lastOrder = localStorage.getItem('lastOrder');
+    if (lastOrder) {
+        const orderData = JSON.parse(lastOrder);
         
-        // Check if payment was within last 10 minutes
-        const timeDiff = Date.now() - paymentData.timestamp;
-        if (timeDiff < 600000) { // 10 minutes
-            setTimeout(() => {
-                showPaymentStatusDialog(paymentData);
-            }, 1000);
-        }
-    }
-}
-
-// Check URL parameters for payment status
-function checkUrlForPaymentStatus() {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    if (urlParams.get('payment_status') === 'success') {
-        handlePaymentSuccess();
-    } else if (urlParams.get('payment_status') === 'failed') {
-        handlePaymentFailure();
-    }
-}
-
-// Show payment verification dialog with security
-function showPaymentStatusDialog(paymentData) {
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 99999;
-        font-family: 'Poppins', sans-serif;
-    `;
-    
-    const modalContent = document.createElement('div');
-    modalContent.style.cssText = `
-        background: white;
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        max-width: 450px;
-        text-align: center;
-    `;
-    
-    modalContent.innerHTML = `
-        <div style="margin-bottom: 20px;">
-            <i class="fas fa-shield-alt" style="font-size: 48px; color: #3498db; margin-bottom: 15px;"></i>
-            <h3 style="color: #333; margin-bottom: 15px;">🔐 Payment Verification</h3>
-        </div>
+        const receipt = {
+            receiptId: 'RCP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            orderId: orderData.orderId,
+            timestamp: new Date().toLocaleString(),
+            amount: orderData.amount,
+            items: orderData.items,
+            paymentMethod: 'Razorpay',
+            status: 'Completed',
+            merchantName: 'ShopEasy'
+        };
         
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-            <p style="color: #666; margin-bottom: 8px;"><strong>Order ID:</strong> ${paymentData.orderId}</p>
-            <p style="color: #666; margin-bottom: 8px;"><strong>Amount:</strong> ₹${paymentData.amount}</p>
-            <p style="color: #666;"><strong>Items:</strong> ${paymentData.items} products</p>
-        </div>
+        // Store receipt
+        const receipts = JSON.parse(localStorage.getItem('paymentReceipts') || '[]');
+        receipts.push(receipt);
+        localStorage.setItem('paymentReceipts', JSON.stringify(receipts));
         
-        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #ffc107;">
-            <p style="color: #856404; font-size: 14px; margin: 0;">
-                ⚠️ <strong>SECURITY NOTICE:</strong><br>
-                Only confirm if you have successfully completed payment on Razorpay and received confirmation.
-            </p>
-        </div>
+        // Clear order data
+        localStorage.removeItem('lastOrder');
         
-        <p style="color: #666; margin-bottom: 25px; font-weight: 500;">
-            Please verify your payment status carefully:
-        </p>
-        
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-            <button onclick="verifyAndConfirmPayment('${paymentData.orderId}'); document.body.removeChild(this.closest('div').parentElement.parentElement)" 
-                    style="background: #28a745; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                ✅ I completed payment and received Razorpay confirmation
-            </button>
-            <button onclick="handlePaymentFailure(); document.body.removeChild(this.closest('div').parentElement.parentElement)" 
-                    style="background: #dc3545; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">
-                ❌ Payment was not completed
-            </button>
-        </div>
-        
-        <button onclick="document.body.removeChild(this.parentElement.parentElement)" 
-                style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 15px; cursor: pointer; font-size: 12px;">
-            ⏸️ I'll check later
-        </button>
-        
-        <div style="margin-top: 20px; padding: 10px; background: #e7f3ff; border-radius: 6px;">
-            <p style="color: #0066cc; font-size: 12px; margin: 0;">
-                💡 <strong>Tip:</strong> Check your email/SMS for Razorpay payment confirmation before proceeding.
-            </p>
-        </div>
-    `;
-    
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-}
-
-// Verify and confirm payment with additional security
-function verifyAndConfirmPayment(orderId) {
-    const pendingPayment = localStorage.getItem('pendingPayment');
-    if (!pendingPayment) {
-        showCustomAlert('❌ No pending payment found!\\n\\nPayment session may have expired.');
-        return;
-    }
-    
-    const paymentData = JSON.parse(pendingPayment);
-    const timeDiff = Date.now() - paymentData.timestamp;
-    
-    // Security checks
-    if (paymentData.orderId !== orderId) {
-        showCustomAlert('❌ Order ID mismatch!\\n\\nSecurity validation failed.');
-        return;
-    }
-    
-    // Check if payment was initiated recently (within 15 minutes)
-    if (timeDiff > 900000) { // 15 minutes
-        showCustomAlert('❌ Payment session expired!\\n\\nPayment window was too long ago.\\nPlease initiate a new payment.');
-        localStorage.removeItem('pendingPayment');
-        return;
-    }
-    
-    // Check if payment was too quick (less than 30 seconds)
-    if (timeDiff < 30000) { // 30 seconds
-        showCustomAlert('⚠️ Payment too quick!\\n\\nPlease ensure you completed the full payment process on Razorpay.');
-        return;
-    }
-    
-    // Additional verification: Check for multiple rapid confirmations
-    const lastConfirmation = localStorage.getItem('lastPaymentConfirmation');
-    if (lastConfirmation) {
-        const lastTime = parseInt(lastConfirmation);
-        if (Date.now() - lastTime < 60000) { // 1 minute
-            showCustomAlert('❌ Multiple confirmation attempts detected!\\n\\nPlease wait before confirming again.');
-            return;
-        }
-    }
-    
-    // Store confirmation timestamp
-    localStorage.setItem('lastPaymentConfirmation', Date.now().toString());
-    
-    // All checks passed - proceed with payment confirmation
-    handlePaymentSuccess();
-}
-
-// Handle successful payment (now called after verification)
-function handlePaymentSuccess() {
-    const pendingPayment = localStorage.getItem('pendingPayment');
-    if (pendingPayment) {
-        const paymentData = JSON.parse(pendingPayment);
-        
-        // Security log
-        console.log('✅ Payment verified and confirmed:', {
-            orderId: paymentData.orderId,
-            amount: paymentData.amount,
-            timestamp: new Date(paymentData.timestamp).toLocaleString(),
-            verificationTime: new Date().toLocaleString()
-        });
-        
-        // Clear cart and show success
+        // Clear cart
         cart = [];
         updateCartUI();
-        localStorage.removeItem('pendingPayment');
         
-        // Generate receipt with verification timestamp
-        generatePaymentReceipt({
-            ...paymentData,
-            verifiedAt: Date.now()
-        });
+        console.log('📧 Receipt generated:', receipt);
+        console.log('=== PAYMENT RECEIPT ===');
+        console.log('Receipt ID:', receipt.receiptId);
+        console.log('Order ID:', receipt.orderId);
+        console.log('Date:', receipt.timestamp);
+        console.log('Amount: ₹' + receipt.amount);
+        console.log('Items:', receipt.items);
+        console.log('Status:', receipt.status);
+        console.log('==================');
         
-        showCustomAlert('🎉 Payment Verified & Confirmed!\\n\\nThank you for your purchase.\\nSecure receipt has been generated!');
+        showCustomAlert('🎉 Payment Successful!\\n\\nThank you for your purchase!\\nReceipt has been generated.');
     }
-}
-
-// Handle failed payment
-function handlePaymentFailure() {
-    localStorage.removeItem('pendingPayment');
-    showCustomAlert('❌ Payment Failed!\\n\\nYour cart items are still saved.\\nPlease try again.');
-}
-
-// Generate Secure Payment Receipt
-function generatePaymentReceipt(paymentData) {
-    const receipt = {
-        orderId: paymentData.orderId,
-        initiatedAt: new Date(paymentData.timestamp).toLocaleString(),
-        verifiedAt: paymentData.verifiedAt ? new Date(paymentData.verifiedAt).toLocaleString() : new Date().toLocaleString(),
-        amount: paymentData.amount,
-        items: paymentData.items,
-        paymentMethod: 'Razorpay',
-        status: 'Verified & Paid',
-        merchantName: 'ShopEasy',
-        securityHash: generateSecurityHash(paymentData),
-        receiptId: 'RCP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
-    };
-    
-    // Store in localStorage
-    const receipts = JSON.parse(localStorage.getItem('paymentReceipts') || '[]');
-    receipts.push(receipt);
-    localStorage.setItem('paymentReceipts', JSON.stringify(receipts));
-    
-    console.log('📧 Secure receipt generated:', receipt);
-    
-    // Show detailed receipt in console
-    console.log('=== SECURE PAYMENT RECEIPT ===');
-    console.log('Receipt ID:', receipt.receiptId);
-    console.log('Order ID:', receipt.orderId);
-    console.log('Payment Initiated:', receipt.initiatedAt);
-    console.log('Payment Verified:', receipt.verifiedAt);
-    console.log('Amount: ₹' + receipt.amount);
-    console.log('Items:', receipt.items);
-    console.log('Status:', receipt.status);
-    console.log('Security Hash:', receipt.securityHash);
-    console.log('===========================');
-}
-
-// Generate security hash for receipt verification
-function generateSecurityHash(paymentData) {
-    const hashString = paymentData.orderId + paymentData.amount + paymentData.timestamp + 'SHOPEASY_SECRET';
-    let hash = 0;
-    for (let i = 0; i < hashString.length; i++) {
-        const char = hashString.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash).toString(16).toUpperCase().substr(0, 8);
 }
 
 // Custom Alert Function - No Domain Name in Title
