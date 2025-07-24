@@ -289,12 +289,24 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Lock button initialized');
         }, 100);
         
-        // Check for completed orders on page load
+        // Check for payment returns and completed orders on page load
         setTimeout(() => {
-            const lastOrder = localStorage.getItem('lastOrder');
-            if (lastOrder) {
-                // Simple receipt generation
-                generateSimpleReceipt();
+            // Check if returning from payment
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPaymentReturn = urlParams.get('payment_return');
+            const returnOrderId = urlParams.get('order_id');
+            
+            if (isPaymentReturn === 'true' && returnOrderId) {
+                console.log('🔄 User returned from Razorpay payment');
+                checkPaymentReturn(returnOrderId);
+            } else {
+                // Check for pending orders
+                const lastOrder = localStorage.getItem('lastOrder');
+                if (lastOrder) {
+                    const orderData = JSON.parse(lastOrder);
+                    // Show return dialog for pending orders
+                    showPaymentReturnDialog(orderData);
+                }
             }
         }, 2000);
         
@@ -2061,20 +2073,31 @@ function payWithRazorpay() {
     // Store order info
     localStorage.setItem('lastOrder', JSON.stringify(orderData));
     
-    // Direct redirect to Razorpay - Let Razorpay handle confirmation
+    // Enhanced redirect with return URL for faster comeback
     try {
+        const currentUrl = window.location.href;
+        const returnUrl = encodeURIComponent(currentUrl + '?payment_return=true&order_id=' + orderData.orderId);
+        
         // For mobile/webview - use location.href for better experience
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
+        // Keep app alive with visibility check
+        keepAppAlive();
+        
         if (isMobile) {
-            // Mobile: same tab redirect
+            // Mobile: same tab redirect with return URL
             window.location.href = 'https://razorpay.me/@muzamilahmadmirgojjer';
         } else {
-            // Desktop: new tab
-            window.open('https://razorpay.me/@muzamilahmadmirgojjer', '_blank');
+            // Desktop: new tab with focus monitoring
+            const paymentWindow = window.open('https://razorpay.me/@muzamilahmadmirgojjer', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+            
+            // Monitor payment window for closure
+            if (paymentWindow) {
+                monitorPaymentWindow(paymentWindow, orderData.orderId);
+            }
         }
         
-        console.log('🔗 Redirected to Razorpay for payment processing');
+        console.log('🔗 Redirected to Razorpay with return monitoring');
         
     } catch (error) {
         console.error('Error redirecting to Razorpay:', error);
@@ -4579,6 +4602,192 @@ function closeManualModal() {
         document.body.removeChild(window.manualPaymentModal);
         window.manualPaymentModal = null;
     }
+}
+
+// Keep app alive during payment process
+function keepAppAlive() {
+    console.log('🔋 Keeping app alive during payment...');
+    
+    // Prevent app from sleeping/closing
+    let wakeLock = null;
+    
+    // Screen Wake Lock API (for modern browsers)
+    if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(lock => {
+            wakeLock = lock;
+            console.log('📱 Screen wake lock activated');
+        }).catch(err => {
+            console.log('⚠️ Wake lock not available:', err);
+        });
+    }
+    
+    // Heartbeat to keep connection alive
+    const heartbeat = setInterval(() => {
+        console.log('💓 App heartbeat active...');
+        
+        // Store heartbeat timestamp
+        localStorage.setItem('appHeartbeat', Date.now().toString());
+        
+        // Check if payment completed
+        const lastOrder = localStorage.getItem('lastOrder');
+        if (!lastOrder) {
+            console.log('✅ Payment completed, stopping heartbeat');
+            clearInterval(heartbeat);
+            if (wakeLock) {
+                wakeLock.release();
+                console.log('📱 Screen wake lock released');
+            }
+        }
+    }, 3000); // Every 3 seconds
+    
+    // Store heartbeat ID for cleanup
+    localStorage.setItem('paymentHeartbeat', heartbeat.toString());
+}
+
+// Monitor payment window (for desktop)
+function monitorPaymentWindow(paymentWindow, orderId) {
+    console.log('👁️ Monitoring payment window...');
+    
+    const checkWindow = setInterval(() => {
+        try {
+            // Check if payment window is closed
+            if (paymentWindow.closed) {
+                console.log('🪟 Payment window closed, checking status...');
+                clearInterval(checkWindow);
+                
+                // Give a moment for data to sync
+                setTimeout(() => {
+                    checkPaymentReturn(orderId);
+                }, 1000);
+            }
+            
+            // Check if we can access the window URL (same-origin)
+            try {
+                const windowUrl = paymentWindow.location.href;
+                if (windowUrl.includes('success') || windowUrl.includes('payment_return')) {
+                    console.log('✅ Payment success detected in URL');
+                    paymentWindow.close();
+                    clearInterval(checkWindow);
+                    setTimeout(() => generateSimpleReceipt(), 500);
+                }
+            } catch (e) {
+                // Cross-origin, can't read URL - this is normal
+            }
+            
+        } catch (error) {
+            console.log('⚠️ Error monitoring window:', error);
+            clearInterval(checkWindow);
+        }
+    }, 1000); // Check every second
+    
+    // Cleanup after 15 minutes
+    setTimeout(() => {
+        if (!paymentWindow.closed) {
+            console.log('⏰ Payment window timeout, closing monitor');
+            clearInterval(checkWindow);
+        }
+    }, 900000); // 15 minutes
+}
+
+// Check payment return status
+function checkPaymentReturn(orderId) {
+    console.log('🔍 Checking payment return status...');
+    
+    // Check URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPaymentReturn = urlParams.get('payment_return');
+    const returnOrderId = urlParams.get('order_id');
+    
+    if (isPaymentReturn === 'true' && returnOrderId === orderId) {
+        console.log('✅ Payment return confirmed via URL');
+        generateSimpleReceipt();
+        
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+    }
+    
+    // Check localStorage for order
+    const lastOrder = localStorage.getItem('lastOrder');
+    if (lastOrder) {
+        const orderData = JSON.parse(lastOrder);
+        if (orderData.orderId === orderId) {
+            // Payment window closed but order still exists
+            // Show return dialog
+            setTimeout(() => {
+                showPaymentReturnDialog(orderData);
+            }, 1000);
+        }
+    }
+}
+
+// Show payment return dialog
+function showPaymentReturnDialog(orderData) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
+        font-family: 'Poppins', sans-serif;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        text-align: center;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    modalContent.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <i class="fas fa-arrow-left" style="font-size: 36px; color: #2196F3; margin-bottom: 15px;"></i>
+            <h3 style="color: #333; margin-bottom: 10px;">💳 Welcome Back!</h3>
+        </div>
+        
+        <p style="color: #666; margin-bottom: 20px;">
+            We noticed you returned from Razorpay payment page.
+        </p>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="color: #666; font-size: 14px; margin: 0;">
+                <strong>Order:</strong> ${orderData.orderId}<br>
+                <strong>Amount:</strong> ₹${orderData.amount}
+            </p>
+        </div>
+        
+        <p style="color: #666; margin-bottom: 25px; font-size: 14px;">
+            Did you complete your payment successfully?
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button onclick="generateSimpleReceipt(); document.body.removeChild(this.closest('div').parentElement.parentElement)" 
+                    style="background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                ✅ Yes, Payment Completed
+            </button>
+            <button onclick="document.body.removeChild(this.closest('div').parentElement.parentElement)" 
+                    style="background: #f44336; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                ❌ Payment Failed/Cancelled
+            </button>
+        </div>
+        
+        <p style="color: #888; font-size: 12px; margin-top: 15px;">
+            💡 Check your email/SMS for Razorpay confirmation
+        </p>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
 }
 
 // Simple Receipt Generation - Let Razorpay handle confirmation
