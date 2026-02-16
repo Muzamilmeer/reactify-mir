@@ -4070,6 +4070,36 @@ function openChat() {
         chatFloatBtn.style.display = 'none';
     }
     chatOpen = true;
+    // DOM Elements
+const chatBox = document.getElementById('chat-box');
+const userInput = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+
+// Send message on button click or Enter key
+sendBtn.addEventListener('click', sendMessage);
+userInput.addEventListener('keypress', function(e){
+    if(e.key === 'Enter') sendMessage();
+});
+
+function sendMessage() {
+    let message = userInput.value.trim().toLowerCase();
+    if(message === '') return;
+
+    // Show user message
+    chatBox.innerHTML += `<div class="user-msg">You: ${userInput.value}</div>`;
+
+    // Find bot response
+    let response = chatResponses[message] || "Sorry, I didn't understand that. Can you rephrase?";
+    
+    // Show bot response
+    chatBox.innerHTML += `<div class="bot-msg">${response}</div>`;
+
+    // Clear input
+    userInput.value = '';
+
+    // Auto-scroll
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
     
     // Clear notifications
     const notification = document.getElementById('chat-notification');
